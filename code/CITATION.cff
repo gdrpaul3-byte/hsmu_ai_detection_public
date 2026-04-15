@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: "If you use this code or data, please cite the paper below."
+title: "Human Factors in Detecting AI-Generated Portraits: Age, Sex, Device, and Confidence"
+type: dataset
+authors:
+  - family-names: Kim
+    given-names: Sunwhi
+    affiliation: "Hwasung Medi-Science University, Dept. of Bio-Healthcare"
+  - family-names: Kim
+    given-names: Sunyul
+    affiliation: "Yonsei University, Graduate School of Engineering, Dept. of Artificial Intelligence"
+date-released: "2026-03-01"          # Preprint upload month; update if formal publication date differs
+version: "1.0.0"                     # Initial public release; tag with `git tag v1.0.0` when ready
+repository-code: "https://github.com/gdrpaul3-byte/hsmu_ai_detection_public"  # Canonical browser URL (no .git suffix per CFF convention)
+keywords:
+  - AI-generated faces
+  - deepfake detection
+  - human factors
+  - age effects
+  - web experiment
+abstract: >-
+  Code and de-identified data for a large-scale web experiment (N = 1,664)
+  examining human ability to discriminate real face photographs from
+  AI-generated portraits produced by ChatGPT-4o and Imagen 3 (via Gemini 2.5),
+  with stimuli created in July 2025 and data collected August 2025 – January 2026.
+preferred-citation:
+  type: article
+  title: "Human Factors in Detecting AI-Generated Portraits: Age, Sex, Device, and Confidence"
+  authors:
+    - family-names: Kim
+      given-names: Sunwhi
+      affiliation: "Hwasung Medi-Science University, Dept. of Bio-Healthcare"
+    - family-names: Kim
+      given-names: Sunyul
+      affiliation: "Yonsei University, Graduate School of Engineering, Dept. of Artificial Intelligence"
+  year: 2026
+  # doi: ""           # Add DOI once assigned by the journal or preprint server
+  # journal: ""       # Add journal name once accepted
+  # url: ""           # Add arXiv or publisher URL once available

@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Real vs AI Image Test (Lite Ver.)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #5D5FEF;
+      --secondary-color: #4CAF50;
+      --font-family: 'Pretendard', 'Segoe UI', 'Arial', sans-serif;
+      --required-color: #f44336;
+    }
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow-x: hidden; }
+    body {
+      display: flex;
+      padding: 20px 10px;
+      font-family: var(--font-family);
+      background: #f0f2f5;
+      color: #333;
+    }
+    .container {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      margin: auto;
+      max-height: 95vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid var(--primary-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .device-btn {
+      background: #f0f2f5;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      padding: 15px 30px;
+      margin: 0 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .device-btn:hover { border-color: var(--primary-color); background: white; }
+    .device-btn.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+    .affiliation-text { font-size: 14px; color: #888; }
+    h2 { font-size: 28px; margin-bottom: 25px; color: var(--primary-color); font-weight: 700; }
+    h3 { font-size: 20px; margin-bottom: 15px; border-bottom: 2px solid var(--primary-color); padding-bottom: 10px; }
+    p { line-height: 1.8; font-size: 16px; }
+    .lang-select-container { display: flex; gap: 40px; text-align: left; margin-bottom: 30px; }
+    .lang-col { flex: 1; }
+    .lang-btn-container { display: flex; gap: 20px; margin-top: 30px; }
+    .btn { background: var(--primary-color); color: white; border: none; border-radius: 50px; padding: 15px 0; font-size: 18px; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.1); cursor: pointer; transition: all 0.2s ease; flex: 1; text-decoration: none; display: inline-block; width: 100%; text-align: center;}
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+    .btn:disabled { background: #ccc; cursor: not-allowed; }
+    .btn.share-btn { background: var(--secondary-color); margin-top: 15px; }
+    #welcome, #experiment-area, #intermission, #pause-screen, #surveyForm, #pre-survey-notice-screen { display: none; }
+    #intermission h2, #pause-screen h2 { font-size: 24px; font-weight: 700; color: var(--primary-color); margin-bottom: 20px; }
+    #pause-screen p { margin-bottom: 30px; }
+    .intermission-buttons { display: flex; gap: 20px; margin-top: 30px; }
+    .progress { width: 100%; height: 10px; background-color: #e9ecef; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+    .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.4s ease-in-out; }
+    .stats { padding: 10px 15px; margin-bottom: 20px; font-size: 18px; font-weight: 600; color: var(--primary-color); }
+    #fixation { font-size: 60px; font-weight: 500; color: #333; display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+    #image-container { min-height: 450px; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 20px; }
+    #image { max-width: 100%; max-height: 450px; display: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+    #buttons { display: none; justify-content: space-around; gap: 20px; margin-top: 20px; }
+    #buttons button { padding: 18px; font-size: 18px; font-weight: 600; border-radius: 12px; border: none; cursor: pointer; transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 1px; flex: 1; color:white; }
+    #realBtn { background-color: #4CAF50; }
+    #aiBtn { background-color: #f44336; }
+    #feedback { font-size: 22px; font-weight: bold; margin: 0; display: none; padding: 15px; border-radius: 10px; line-height: 1.5; }
+    .correct { background-color: #d4edda; color: #155724; }
+    .wrong { background-color: #f8d7da; color: #721c24; }
+    .form-group { margin-bottom: 25px; text-align: left; }
+    .form-group label { display: block; margin-bottom: 10px; font-weight: 600; color: #555; }
+    .form-group label.required::after { content: "*"; color: var(--required-color); margin-left: 5px; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; font-family: var(--font-family); }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(93, 95, 239, 0.2); }
+    .form-group .checkbox-group label { display: inline-block; margin-right: 15px; font-weight: normal;}
+    .form-group .checkbox-group input { margin-right: 5px;}
+    .form-group .other-text-input { margin-top: 10px; display: none; }
+    .consent-group { display: flex; align-items: flex-start; background: #f4f4f8; padding: 15px; border-radius: 8px; }
+    .consent-group input { width: 18px; height: 18px; margin-right: 15px; flex-shrink: 0; margin-top: 4px;}
+    .consent-group label { margin-bottom: 0; font-weight: normal; }
+    #results-modal { 
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); justify-content: center; overflow-y: auto;
+        padding: 40px 0; z-index: 1000; backdrop-filter: blur(5px);
+    }
+    .results-card { background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 550px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.2); display: flex; flex-direction: column; margin: auto; }
+    .results-card h2 { font-size: 32px; font-weight: 800;}
+    #result-title-image { width: 100%; max-width: 512px; height: auto; max-height: 512px; border-radius: 16px; margin: 20px auto 10px; object-fit: cover; }
+    #result-title-text { font-size: 24px; font-weight: 700; margin-bottom: 5px; }
+    #result-title-desc { font-size: 16px; color: #555; margin-bottom: 15px; line-height: 1.6; }
+    .score-display { font-size: 64px; font-weight: 800; color: var(--primary-color); margin: 5px 0; }
+    .result-details { text-align: left; margin: 25px 0; width: 100%; }
+    .result-item { margin-bottom: 15px; }
+    .result-item-label { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; font-size: 16px; }
+    .result-progress-bar-container { width: 100%; background: #e9ecef; border-radius: 5px; height: 12px; overflow: hidden; }
+    .result-progress-bar { height: 100%; background-color: var(--primary-color); border-radius: 5px; width: 0%; transition: width 1s ease-out; }
+    .notice-content-box {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+        text-align: left;
+        background-color: #f9f9f9;
+    }
+    .notice-content-box p {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    #surveyForm {
+      display: none;
+      text-align: left;
+      max-height: calc(100vh - 80px);
+      overflow-y: auto;
+      padding: 0 15px 20px 15px;
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width: 768px) {
+      body { padding: 5px; }
+      .container { padding: 20px !important; border-radius: 16px !important; }
+      h2 { font-size: 24px !important; }
+      h3 { font-size: 18px !important; }
+      p { font-size: 14px !important; }
+      .btn { font-size: 16px !important; padding: 12px 0 !important; }
+      .lang-select-container { flex-direction: column !important; gap: 20px !important; }
+      #image { max-height: 350px !important; }
+      .form-group input, .form-group select, .form-group textarea { font-size: 14px !important; padding: 10px !important; }
+      #experiment-area .progress { margin-bottom: 10px !important; }
+      #experiment-area .stats { padding: 5px 10px !important; margin-bottom: 10px !important; }
+      #experiment-area #image-container { min-height: 350px !important; margin-bottom: 15px !important; }
+      #experiment-area #buttons { margin-top: 15px !important; }
+      .notice-content-box p { font-size: 13px !important; }
+      #results-modal { padding: 20px 0; }
+      .results-card { padding: 20px; } 
+      .score-display { font-size: 48px; } 
+      #result-title-text { font-size: 20px; }
+      #result-title-desc { font-size: 14px; }
+      #surveyForm {
+        padding: 0 5px 10px 5px;
+        max-height: calc(100vh - 40px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="mainContainer">
+    
+    <div id="welcome-screen">
+      <div style="text-align: center;">
+        <h2 id="main-headline" style="font-size: 28px; font-weight: 800; line-height: 1.4; margin-bottom: 25px;">
+          나의 AI 이미지 판별 능력은 몇점일까?
+        </h2>
+        <img id="result-example-image" src="https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/Cover2.png" alt="결과 예시 화면" style="max-width: 100%; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px;">
+        <button class="btn" id="start-test-btn" style="max-width: 400px; margin: 0 auto;">내 능력 테스트하기</button>
+        <p class="affiliation-text" style="margin-top: 30px;">화성의과학대학교 바이오헬스케어학과</p>
+        <p id="app-version-display" style="font-size: 12px; color: #aaa; margin-top: 10px;"></p>
+      </div>
+    </div>
+
+    <div id="device-selection-screen" style="display: none;">
+        <p style="margin-bottom: 15px; font-size: 18px; font-weight: 600;">어떤 기기에서 참여하시나요?<br>Which device are you using?</p>
+        <button class="device-btn" onclick="selectDevice('mobile')">📱 모바일 (Mobile)</button>
+        <button class="device-btn" onclick="selectDevice('web')">💻 컴퓨터 (PC)</button>
+    </div>
+    
+    <div id="loading-spinner-screen" style="display: none; text-align: center;">
+        <div class="loading-spinner" style="margin: 0 auto;"></div>
+        <p id="loading-text" style="margin-top: 20px;"></p>
+    </div>
+
+    <div id="welcome">
+      <h2 id="welcome-title"></h2>
+      <div class="lang-select-container">
+        <div class="lang-col"><h3 id="welcome-ko-title"></h3><p id="welcome-ko-desc"></p><p id="welcome-ko-plus-desc"></p><p id="welcome-ko-trials" style="margin-top:10px;"></p></div>
+        <div class="lang-col"><h3 id="welcome-en-title"></h3><p id="welcome-en-desc"></p><p id="welcome-en-plus-desc"></p><p id="welcome-en-trials" style="margin-top:10px;"></p></div>
+      </div>
+      <div class="lang-btn-container">
+        <button class="btn" id="start-ko"></button>
+        <button class="btn" id="start-en"></button>
+      </div>
+      <p class="affiliation-text" id="welcome-affiliation"></p>
+    </div>
+
+    <div id="experiment-area">
+      <h3 id="practice-title" style="font-size: 24px; font-weight: bold; margin-bottom: 15px; line-height: 1.4;"></h3>
+      <p id="question-text" style="font-size: 18px; margin-bottom: 20px;"></p>
+      <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="stats" id="stats-text"></div>
+      <div id="image-container">
+          <div id="fixation">+</div>
+          <img id="image" alt="Test Image">
+      </div>
+      <div id="feedback"></div>
+      <div id="buttons">
+        <button id="realBtn">REAL</button>
+        <button id="aiBtn">AI</button>
+      </div>
+    </div>
+
+    <div id="intermission">
+      <h2 id="intermission-title"></h2>
+      <p id="intermission-desc" style="margin-top: 15px;"></p>
+      <div class="intermission-buttons" style="flex-direction: column; align-items: center;">
+        <button class="btn" id="next-trial-btn" style="max-width: 300px;"></button>
+      </div>
+    </div>
+
+    <div id="pause-screen">
+      <h2 id="pause-title"></h2>
+      <p id="pause-desc"></p>
+      <button class="btn" id="resume-btn"></button>
+    </div>
+    
+    <div id="pre-survey-notice-screen">
+        <h2 id="pre-survey-title"></h2>
+        <div class="notice-content-box">
+            <p><strong>연구 안내</strong><br>본 설문은 인공지능(AI)이 생성한 이미지에 대한 인간의 인식 및 판별 능력을 알아보기 위한 연구입니다.</p>
+            <p><strong>생명윤리위원회(IRB) 승인</strong><br>본 연구는 화성의과학대학교 생명윤리위원회(IRB)의 승인을 받아 수행됩니다 (IRB 승인 번호: HSMUIRB-2025-06).</p>
+            <p><strong>자발적 참여 및 보상</strong><br>본 연구 참여는 100% 자발적으로 이루어지며, 참여에 대한 어떠한 금전적/물질적 보상(리워드)도 제공되지 않습니다. 다만, 연구에 끝까지 참여하여 데이터를 제공해주시는 분들께는 감사의 의미로 본인의 이미지 판별 능력 점수와 그에 대한 해석이 담긴 피드백을 제공합니다.</p>
+            <p><strong>익명성 보장 및 데이터 활용</strong><br>설문 응답은 완전한 익명으로 수집되며, 통계 분석 및 학술 연구 목적 외에는 절대로 사용되지 않습니다. 연구 참여는 전적으로 자발적이며, 원치 않으시면 언제든지 중단하실 수 있습니다.</p>
+            <p><strong>참여 동의 간주</strong><br>아래 설문조사를 완료하고 최종 제출하시는 것은, 위 내용을 충분히 이해하고 자발적으로 연구에 참여하는 데 동의하신 것으로 간주됩니다.</p>
+            <p>모든 문항에는 정답이 없으며, 귀하의 솔직한 생각과 경험에 따라 응답해 주시길 부탁드립니다. 귀하의 소중한 응답은 본 연구에 큰 도움이 될 것입니다. 감사합니다.</p>
+            <hr style="margin: 20px 0;">
+            <p><strong>연구 책임자:</strong> 김선휘, 화성의과학대학교 바이오헬스케어학과 조교수 (skim@hsmu.ac.kr, gdrpaul3@gmail.com)</p>
+            <p><strong>연구 관련 문의:</strong> 김선휘 (skim@hsmu.ac.kr, gdrpaul3@gmail.com)</p>
+        </div>
+        <button class="btn" id="proceed-to-survey-btn" style="max-width: 400px;"></button>
+    </div>
+    <div id="surveyForm" class="survey-form">
+      <h2 id="survey-title" style="display: inline-block; margin-right: 10px;"></h2><span id="survey-progress-text" style="font-size: 18px; color: #888;"></span>
+      <div class="progress" style="margin-bottom: 30px;"><div class="progress-bar" id="surveyProgressBar"></div></div>
+
+      <div id="survey-notice" style="background-color: #f0f2f5; border-left: 5px solid var(--primary-color); padding: 15px; margin-bottom: 25px; text-align: left;">
+        <p id="survey-notice-text" style="margin:0; font-weight: 500; line-height: 1.6;"></p>
+      </div>
+
+      <div class="survey-page" id="survey-page-1">
+        
+        <div class="form-group"><label for="age" id="label-age" class="required"></label><input type="number" id="age" min="10" max="99" required></div>
+        <div class="form-group"><label for="gender" id="label-gender" class="required"></label><select id="gender" required></select></div>
+        <div class="form-group"><label id="label-first-time" class="required"></label><select id="first-time" required></select></div>
+        <div class="form-group" id="repeat-count-group" style="display:none;"><label for="repeat-count" id="label-repeat-count"></label><input type="number" id="repeat-count" min="2" max="99"></div>
+        <div class="form-group"><label for="nationality" id="label-nationality"></label><input type="text" id="nationality"></div>
+        <div class="form-group"><label for="occupation" id="label-occupation"></label><input type="text" id="occupation" list="occupation-list"><datalist id="occupation-list"><option id="occupation-prefer-not-to-say" value=""></option></datalist></div>
+        <div class="form-group"><label for="mbti" id="label-mbti"></label><select id="mbti"></select></div>
+      </div>
+      
+      <div class="survey-page" id="survey-page-2" style="display:none;">
+        <div class="form-group"><label id="label-ai-exposure-frequency" class="required"></label><select id="ai-exposure-frequency" required></select></div>
+        <div class="form-group"><label id="label-ai-exposure-sources" class="required"></label><div id="ai-exposure-sources-checkboxes" class="checkbox-group"></div><input type="text" id="ai-exposure-sources-other" class="other-text-input" style="display:none;"></div>
+        <div class="form-group"><label id="label-used-tools" class="required"></label><div id="used-tools-checkboxes" class="checkbox-group"></div><input type="text" id="used-tools-other" class="other-text-input" style="display:none;"></div>
+      </div>
+
+      <div class="survey-page" id="survey-page-3" style="display:none;">
+        <div class="form-group"><label id="label-ai-confidence" class="required"></label><select id="ai-confidence" required></select></div>
+        <div class="form-group"><label id="label-ai-attitude" class="required"></label><select id="ai-attitude" required></select></div>
+        <div class="form-group"><label id="label-ai-concerns" class="required"></label><div id="ai-concerns-checkboxes" class="checkbox-group"></div><input type="text" id="ai-concerns-other" class="other-text-input" style="display:none;"></div>
+        <div class="form-group"><label id="label-ai-benefits" class="required"></label><div id="ai-benefits-checkboxes" class="checkbox-group"></div><input type="text" id="ai-benefits-other" class="other-text-input" style="display:none;"></div>
+      </div>
+
+      <div class="survey-page" id="survey-page-4" style="display:none;">
+        <div class="form-group"><label id="label-strategy" class="required"></label><div id="strategy-checkboxes" class="checkbox-group"></div><input type="text" id="strategy-other" class="other-text-input" style="display:none;"></div>
+        <div class.form-group"><label for="suggestions" id="label-suggestions"></label><textarea id="suggestions" rows="4"></textarea></div>
+      </div>
+
+      <div class="survey-page" id="survey-page-5" style="display:none;">
+        <div class="form-group"><p id="survey-desc" style="margin-bottom: 25px; font-size: 14px;"></p><div class="consent-group"><input type="checkbox" id="consent" required><label for="consent" id="label-consent" class="required"></label></div></div>
+      </div>
+
+      <div class="survey-navigation" style="display: flex; justify-content: space-between; margin-top: 30px;">
+        <button id="prevBtn" class="btn" style="background-color: #6c757d; max-width: 150px;">이전</button>
+        <button id="nextBtn" class="btn" style="max-width: 150px;">다음</button>
+        <button id="submitBtn" class="btn" style="display:none;">최종 제출하고 결과 보기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="results-modal">
+    <div class="results-card">
+      <h2 id="results-title"></h2>
+      <img id="result-title-image" src="" alt="Result Title Image">
+      <h3 id="result-title-text"></h3>
+      <p id="result-title-desc"></p>
+      <p id="final-accuracy-label" style="font-size: 18px; font-weight: 600; margin-bottom: 5px;"></p>
+      <div class="score-display" id="final-accuracy">0%</div>
+      <p style="font-size: 16px; margin-top: 0;" id="final-score">0/0</p>
+      <div class="result-details">
+        <div class="result-item"><div class="result-item-label"><span id="label-real-accuracy"></span><span id="real-accuracy-value">0%</span></div><div class="result-progress-bar-container"><div class="result-progress-bar" id="real-accuracy-bar"></div></div></div>
+        <div class="result-item"><div class="result-item-label"><span id="label-ai-accuracy"></span><span id="ai-accuracy-value">0%</span></div><div class="result-progress-bar-container"><div class="result-progress-bar" id="ai-accuracy-bar"></div></div></div>
+      </div>
+      <button id="share-button" class="btn share-btn"></button>
+      <button id="restart-button" class="btn"></button>
+      <p id="results-affiliation" class="affiliation-text" style="margin-top: 25px;"></p>
+    </div>
+  </div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script>
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID",
+    measurementId: "YOUR_MEASUREMENT_ID"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+    const APP_VERSION = "1.2.1"; // Version updated for IRB changes
+    const RESTART_URL = "https://YOUR_PROJECT_ID.web.app/"; 
+    
+    const imageData = {
+        "coverImage": "https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/Cover2.png",
+        "real": [{"id":"00043","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00043.png","type":"real"}, {"id":"00109","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00109.png","type":"real"}, {"id":"00144","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00144.png","type":"real"}, {"id":"00300","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00300.png","type":"real"}, {"id":"00348","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00348.png","type":"real"}, {"id":"00641","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00641.png","type":"real"}, {"id":"00650","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00650.png","type":"real"}, {"id":"00651","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00651.png","type":"real"}, {"id":"00653","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00653.png","type":"real"}, {"id":"00733","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00733.png","type":"real"}, {"id":"00750","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00750.png","type":"real"}, {"id":"00756","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00756.png","type":"real"}, {"id":"00773","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00773.png","type":"real"}, {"id":"00809","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00809.png","type":"real"}, {"id":"00813","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00813.png","type":"real"}, {"id":"00850","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00850.png","type":"real"}, {"id":"00868","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00868.png","type":"real"}, {"id":"00873","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00873.png","type":"real"}, {"id":"01020","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01020.png","type":"real"}, {"id":"01039","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01039.png","type":"real"}, {"id":"01098","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01098.png","type":"real"}, {"id":"01104","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01104.png","type":"real"}, {"id":"01126","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01126.png","type":"real"}, {"id":"01218","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01218.png","type":"real"}, {"id":"01220","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01220.png","type":"real"}, {"id":"01230","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01230.png","type":"real"}, {"id":"01386","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01386.png","type":"real"}, {"id":"01399","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01399.png","type":"real"}, {"id":"01423","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01423.png","type":"real"}, {"id":"01533","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01533.png","type":"real"}, {"id":"01678","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01678.png","type":"real"}, {"id":"01705","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01705.png","type":"real"}, {"id":"01708","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01708.png","type":"real"}, {"id":"01732","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01732.png","type":"real"}, {"id":"01734","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01734.png","type":"real"}, {"id":"01822","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01822.png","type":"real"}, {"id":"01828","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01828.png","type":"real"}, {"id":"01924","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01924.png","type":"real"}, {"id":"01956","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01956.png","type":"real"}, {"id":"02116","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02116.png","type":"real"}, {"id":"02122","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02122.png","type":"real"}, {"id":"02155","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02155.png","type":"real"}, {"id":"02167","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02167.png","type":"real"}, {"id":"02228","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02228.png","type":"real"}, {"id":"02260","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02260.png","type":"real"}, {"id":"02285","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02285.png","type":"real"}, {"id":"02448","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02448.png","type":"real"}, {"id":"02452","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02452.png","type":"real"}, {"id":"02466","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02466.png","type":"real"}, {"id":"02476","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02476.png","type":"real"}, {"id":"02674","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02674.png","type":"real"}, {"id":"02681","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02681.png","type":"real"}, {"id":"02697","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02697.png","type":"real"}, {"id":"02718","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02718.png","type":"real"}, {"id":"02721","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02721.png","type":"real"}, {"id":"02753","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02753.png","type":"real"}, {"id":"02784","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02784.png","type":"real"}, {"id":"02885","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02885.png","type":"real"}, {"id":"02985","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02985.png","type":"real"}, {"id":"03015","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03015.png","type":"real"}, {"id":"03085","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03085.png","type":"real"}, {"id":"03184","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03184.png","type":"real"}, {"id":"03185","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03185.png","type":"real"}, {"id":"03415","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03415.png","type":"real"}, {"id":"03470","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03470.png","type":"real"}, {"id":"03502","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03502.png","type":"real"}, {"id":"03536","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03536.png","type":"real"}, {"id":"03567","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03567.png","type":"real"}, {"id":"03594","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03594.png","type":"real"}, {"id":"03677","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03677.png","type":"real"}],
+        "chatgpt": [{"id":"00043","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00043_chatgpt.png","type":"ai_chatgpt"}, {"id":"00109","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00109_chatgpt.png","type":"ai_chatgpt"}, {"id":"00144","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00144_chatgpt.png","type":"ai_chatgpt"}, {"id":"00300","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00300_chatgpt.png","type":"ai_chatgpt"}, {"id":"00348","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00348_chatgpt.png","type":"ai_chatgpt"}, {"id":"00641","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00641_chatgpt.png","type":"ai_chatgpt"}, {"id":"00650","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00650_chatgpt.png","type":"ai_chatgpt"}, {"id":"00651","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00651_chatgpt.png","type":"ai_chatgpt"}, {"id":"00653","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00653_chatgpt.png","type":"ai_chatgpt"}, {"id":"00733","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00733_chatgpt.png","type":"ai_chatgpt"}, {"id":"00750","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00750_chatgpt.png","type":"ai_chatgpt"}, {"id":"00756","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00756_chatgpt.png","type":"ai_chatgpt"}, {"id":"00773","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00773_chatgpt.png","type":"ai_chatgpt"}, {"id":"00809","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00809_chatgpt.png","type":"ai_chatgpt"}, {"id":"00813","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00813_chatgpt.png","type":"ai_chatgpt"}, {"id":"00850","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00850_chatgpt.png","type":"ai_chatgpt"}, {"id":"00868","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00868_chatgpt.png","type":"ai_chatgpt"}, {"id":"00873","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00873_chatgpt.png","type":"ai_chatgpt"}, {"id":"01020","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01020_chatgpt.png","type":"ai_chatgpt"}, {"id":"01039","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01039_chatgpt.png","type":"ai_chatgpt"}, {"id":"01098","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01098_chatgpt.png","type":"ai_chatgpt"}, {"id":"01104","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01104_chatgpt.png","type":"ai_chatgpt"}, {"id":"01126","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01126_chatgpt.png","type":"ai_chatgpt"}, {"id":"01218","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01218_chatgpt.png","type":"ai_chatgpt"}, {"id":"01220","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01220_chatgpt.png","type":"ai_chatgpt"}, {"id":"01230","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01230_chatgpt.png","type":"ai_chatgpt"}, {"id":"01386","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01386_chatgpt.png","type":"ai_chatgpt"}, {"id":"01399","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01399_chatgpt.png","type":"ai_chatgpt"}, {"id":"01423","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01423_chatgpt.png","type":"ai_chatgpt"}, {"id":"01533","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01533_chatgpt.png","type":"ai_chatgpt"}, {"id":"01678","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01678_chatgpt.png","type":"ai_chatgpt"}, {"id":"01705","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01705_chatgpt.png","type":"ai_chatgpt"}, {"id":"01708","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01708_chatgpt.png","type":"ai_chatgpt"}, {"id":"01732","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01732_chatgpt.png","type":"ai_chatgpt"}, {"id":"01734","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01734_chatgpt.png","type":"ai_chatgpt"}, {"id":"01822","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01822_chatgpt.png","type":"ai_chatgpt"}, {"id":"01828","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01828_chatgpt.png","type":"ai_chatgpt"}, {"id":"01924","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01924_chatgpt.png","type":"ai_chatgpt"}, {"id":"01956","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01956_chatgpt.png","type":"ai_chatgpt"}, {"id":"02116","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02116_chatgpt.png","type":"ai_chatgpt"}, {"id":"02122","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02122_chatgpt.png","type":"ai_chatgpt"}, {"id":"02155","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02155_chatgpt.png","type":"ai_chatgpt"}, {"id":"02167","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02167_chatgpt.png","type":"ai_chatgpt"}, {"id":"02228","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02228_chatgpt.png","type":"ai_chatgpt"}, {"id":"02260","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02260_chatgpt.png","type":"ai_chatgpt"}, {"id":"02285","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02285_chatgpt.png","type":"ai_chatgpt"}, {"id":"02448","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02448_chatgpt.png","type":"ai_chatgpt"}, {"id":"02452","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02452_chatgpt.png","type":"ai_chatgpt"}, {"id":"02466","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02466_chatgpt.png","type":"ai_chatgpt"}, {"id":"02476","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02476_chatgpt.png","type":"ai_chatgpt"}, {"id":"02674","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02674_chatgpt.png","type":"ai_chatgpt"}, {"id":"02681","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02681_chatgpt.png","type":"ai_chatgpt"}, {"id":"02697","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02697_chatgpt.png","type":"ai_chatgpt"}, {"id":"02718","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02718_chatgpt.png","type":"ai_chatgpt"}, {"id":"02721","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02721_chatgpt.png","type":"ai_chatgpt"}, {"id":"02753","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02753_chatgpt.png","type":"ai_chatgpt"}, {"id":"02784","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02784_chatgpt.png","type":"ai_chatgpt"}, {"id":"02885","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02885_chatgpt.png","type":"ai_chatgpt"}, {"id":"02985","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02985_chatgpt.png","type":"ai_chatgpt"}, {"id":"03015","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03015_chatgpt.png","type":"ai_chatgpt"}, {"id":"03085","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03085_chatgpt.png","type":"ai_chatgpt"}, {"id":"03184","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03184_chatgpt.png","type":"ai_chatgpt"}, {"id":"03185","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03185_chatgpt.png","type":"ai_chatgpt"}, {"id":"03415","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03415_chatgpt.png","type":"ai_chatgpt"}, {"id":"03470","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03470_chatgpt.png","type":"ai_chatgpt"}, {"id":"03502","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03502_chatgpt.png","type":"ai_chatgpt"}, {"id":"03536","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03536_chatgpt.png","type":"ai_chatgpt"}, {"id":"03567","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03567_chatgpt.png","type":"ai_chatgpt"}, {"id":"03594","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03594_chatgpt.png","type":"ai_chatgpt"}, {"id":"03677","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03677_chatgpt.png","type":"ai_chatgpt"}],
+        "gemini": [{"id":"00043","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00043_gemini.png","type":"ai_gemini"}, {"id":"00109","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00109_gemini.png","type":"ai_gemini"}, {"id":"00144","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00144_gemini.png","type":"ai_gemini"}, {"id":"00300","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00300_gemini.png","type":"ai_gemini"}, {"id":"00348","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00348_gemini.png","type":"ai_gemini"}, {"id":"00641","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00641_gemini.png","type":"ai_gemini"}, {"id":"00650","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00650_gemini.png","type":"ai_gemini"}, {"id":"00651","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00651_gemini.png","type":"ai_gemini"}, {"id":"00653","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00653_gemini.png","type":"ai_gemini"}, {"id":"00733","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00733_gemini.png","type":"ai_gemini"}, {"id":"00750","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00750_gemini.png","type":"ai_gemini"}, {"id":"00756","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00756_gemini.png","type":"ai_gemini"}, {"id":"00773","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00773_gemini.png","type":"ai_gemini"}, {"id":"00809","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00809_gemini.png","type":"ai_gemini"}, {"id":"00813","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00813_gemini.png","type":"ai_gemini"}, {"id":"00850","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00850_gemini.png","type":"ai_gemini"}, {"id":"00868","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00868_gemini.png","type":"ai_gemini"}, {"id":"00873","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/00873_gemini.png","type":"ai_gemini"}, {"id":"01020","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01020_gemini.png","type":"ai_gemini"}, {"id":"01039","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01039_gemini.png","type":"ai_gemini"}, {"id":"01098","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01098_gemini.png","type":"ai_gemini"}, {"id":"01104","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01104_gemini.png","type":"ai_gemini"}, {"id":"01126","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01126_gemini.png","type":"ai_gemini"}, {"id":"01218","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01218_gemini.png","type":"ai_gemini"}, {"id":"01220","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01220_gemini.png","type":"ai_gemini"}, {"id":"01230","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01230_gemini.png","type":"ai_gemini"}, {"id":"01386","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01386_gemini.png","type":"ai_gemini"}, {"id":"01399","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01399_gemini.png","type":"ai_gemini"}, {"id":"01423","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01423_gemini.png","type":"ai_gemini"}, {"id":"01533","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01533_gemini.png","type":"ai_gemini"}, {"id":"01678","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01678_gemini.png","type":"ai_gemini"}, {"id":"01705","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01705_gemini.png","type":"ai_gemini"}, {"id":"01708","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01708_gemini.png","type":"ai_gemini"}, {"id":"01732","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01732_gemini.png","type":"ai_gemini"}, {"id":"01734","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01734_gemini.png","type":"ai_gemini"}, {"id":"01822","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01822_gemini.png","type":"ai_gemini"}, {"id":"01828","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01828_gemini.png","type":"ai_gemini"}, {"id":"01924","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01924_gemini.png","type":"ai_gemini"}, {"id":"01956","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/01956_gemini.png","type":"ai_gemini"}, {"id":"02116","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02116_gemini.png","type":"ai_gemini"}, {"id":"02122","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02122_gemini.png","type":"ai_gemini"}, {"id":"02155","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02155_gemini.png","type":"ai_gemini"}, {"id":"02167","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02167_gemini.png","type":"ai_gemini"}, {"id":"02228","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02228_gemini.png","type":"ai_gemini"}, {"id":"02260","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02260_gemini.png","type":"ai_gemini"}, {"id":"02285","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02285_gemini.png","type":"ai_gemini"}, {"id":"02448","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02448_gemini.png","type":"ai_gemini"}, {"id":"02452","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02452_gemini.png","type":"ai_gemini"}, {"id":"02466","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02466_gemini.png","type":"ai_gemini"}, {"id":"02476","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02476_gemini.png","type":"ai_gemini"}, {"id":"02674","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02674_gemini.png","type":"ai_gemini"}, {"id":"02681","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02681_gemini.png","type":"ai_gemini"}, {"id":"02697","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02697_gemini.png","type":"ai_gemini"}, {"id":"02718","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02718_gemini.png","type":"ai_gemini"}, {"id":"02721","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02721_gemini.png","type":"ai_gemini"}, {"id":"02753","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02753_gemini.png","type":"ai_gemini"}, {"id":"02784","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02784_gemini.png","type":"ai_gemini"}, {"id":"02885","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02885_gemini.png","type":"ai_gemini"}, {"id":"02985","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/02985_gemini.png","type":"ai_gemini"}, {"id":"03015","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03015_gemini.png","type":"ai_gemini"}, {"id":"03085","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03085_gemini.png","type":"ai_gemini"}, {"id":"03184","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03184_gemini.png","type":"ai_gemini"}, {"id":"03185","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03185_gemini.png","type":"ai_gemini"}, {"id":"03415","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03415_gemini.png","type":"ai_gemini"}, {"id":"03470","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03470_gemini.png","type":"ai_gemini"}, {"id":"03502","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03502_gemini.png","type":"ai_gemini"}, {"id":"03536","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03536_gemini.png","type":"ai_gemini"}, {"id":"03567","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03567_gemini.png","type":"ai_gemini"}, {"id":"03594","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03594_gemini.png","type":"ai_gemini"}, {"id":"03677","url":"https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/03677_gemini.png","type":"ai_gemini"}]
+    };
+
+    let images, participantId, trials = [], currentTrial = 0, correctAnswers = 0, responses = [], totalTrials = 20, currentLang, isPractice = false;
+    let practiceTrials = [], currentPracticeTrial = 0, usedImages = new Set(), deviceType = '';
+    const DOMElements = {};
+    let currentSurveyPage = 1;
+    const totalSurveyPages = 5;
+
+    // ▼▼▼ 수정된 부분: i18n 객체에 IRB 안내 텍스트 추가 ▼▼▼
+    const i18n = {
+      ko: {
+        loading_practice: "연습 문제 로딩 중...",
+        practice_title: "연습 문제", fixation_instruction: "'+' 표시에 시선을 고정해 주세요", practice_subtitle: "이 사진은 진짜일까요? AI 일까요?",
+        welcome_title: "Real vs AI 이미지 구분 실험 (라이트 버전)", welcome_ko_title: "실험 안내", welcome_ko_desc: "방금 연습 문제를 통해 실제 사진과 AI 생성 이미지를 구별하는 경험을 하셨습니다.", welcome_ko_plus_desc: "이제 본 실험이 진행됩니다. 화면 중앙의 + 표시는 다음 이미지를 보기 전 시선을 고정하는 데 도움을 줍니다.", welcome_ko_trials: "<strong>총 시행:</strong> 20회", start_ko_btn: "본 실험 시작 (한국어)",
+        affiliation: "화성의과학대학교 바이오헬스케어학과",
+        practice_feedback_correct: "정답입니다! 정답은 ", practice_feedback_wrong: "오답입니다. 정답은 ", next_practice_btn: "다음 연습 문제 (Next Practice)",
+        stats_trial: "시행", real_btn: "REAL", ai_btn: "AI",
+        intermission_title: "시행 {trial}/{total} 완료!", intermission_desc: "잠시 쉬어가도 좋습니다. 준비가 되면 다음 버튼을 눌러주세요.", next_trial_btn: "다음 시행",
+        pause_title: "휴식 중입니다", pause_desc: "준비가 되면 아래 버튼을 눌러 실험을 재개하세요.", resume_btn: "실험 재개하기",
+        pre_survey_title: "연구 참여 안내 및 동의",
+        pre_survey_button: "안내문을 모두 확인했으며, 설문 참여에 동의합니다",
+        survey_title: "참여 정보 및 설문", survey_notice: "결과를 보려면, 설문조사를 완료하고 마지막에 연구 참여에 동의해야 합니다.", survey_desc: "본 연구는 AI 생성 이미지에 대한 인간의 지각적 특성을 분석하기 위해 수행됩니다. 응답 내용은 익명으로 처리되며, 연구 목적 외에는 사용되지 않습니다.",
+        label_nationality: "국적", placeholder_nationality: "예: 한국", label_email: "이메일 주소", placeholder_email: "예: example@email.com", label_first_time: "이 실험을 처음 수행하시나요?", first_time_options: { "": "선택", "yes": "예 (처음입니다)", "no": "아니요 (반복 참여)" }, label_repeat_count: "몇 번째 참여인지 입력해주세요", placeholder_repeat_count: "예: 2", label_age: "연령 (만 나이)", placeholder_age: "예: 25", label_gender: "성별", gender_options: { "": "선택", male: "남성", female: "여성", "prefer-not-to-say": "밝히지 않음" }, label_occupation: "직업군", occupation_not_to_say: "밝히지 않음", placeholder_occupation: "예: 학생, 디자이너", label_mbti: "선택사항: MBTI", 
+        mbti_options: { "": "선택", "ISFJ": "ISFJ", "ESFJ": "ESFJ", "ISTJ": "ISTJ", "ISFP": "ISFP", "ESTJ": "ESTJ", "ESFP": "ESFP", "ENFP": "ENFP", "ISTP": "ISTP", "INFP": "INFP", "ESTP": "ESTP", "INTP": "INTP", "ENFJ": "ENFJ", "ENTP": "ENTP", "ENTJ": "ENTJ", "INFJ": "INFJ", "INTJ": "INTJ", "prefer-not-to-say": "밝히지 않음" },
+        select_all_text: "전체 선택", deselect_all_text: "전체 해제",
+        label_ai_exposure_frequency: "일상에서 AI 생성 이미지/영상을 얼마나 자주 접하십니까?", ai_exposure_frequency_options: { "": "선택", "daily": "매일", "weekly": "주 3-4회", "sometimes": "주 1-2회", "rarely": "월 1-2회", "never": "거의 접하지 않음" },
+        label_ai_exposure_sources: "AI 생성 이미지/영상을 주로 어디서 접하십니까? (해당하는 것 모두 선택)", ai_exposure_sources_options: { "instagram": "인스타그램", "youtube": "유튜브", "twitter": "X (구 트위터)", "tiktok": "틱톡", "facebook": "페이스북", "news": "뉴스/언론 매체", "elevator": "엘리베이터/지하철 광고", "tv": "TV 광고/프로그램", "shopping": "쇼핑몰/이커머스", "none": "없음", "other": "기타(직접입력)" },
+        label_ai_confidence: "AI 생성 이미지를 구별할 수 있는 자신감 정도는?", ai_confidence_options: { "": "선택", "very-confident": "매우 자신있음", "confident": "자신있음", "neutral": "보통", "not-confident": "자신없음", "very-not-confident": "매우 자신없음" },
+        label_ai_attitude: "AI 생성 이미지/영상에 대한 전반적인 태도는?", ai_attitude_options: { "": "선택", "very-positive": "매우 긍정적", "positive": "긍정적", "neutral": "중립적", "negative": "부정적", "very-negative": "매우 부정적" },
+        label_ai_concerns: "AI 생성 콘텐츠에 대해 우려하는 점은? (해당하는 것 모두 선택)", ai_concerns_options: { "fake-news": "가짜뉴스/허위정보 확산", "copyright": "저작권/창작자 권리 침해", "job-loss": "창작자 일자리 감소", "authenticity": "진실성/신뢰성 훼손", "deepfake": "딥페이크 악용", "quality": "예술적 가치 하락", "none": "우려사항 없음", "other": "기타" },
+        label_ai_benefits: "AI 생성 콘텐츠의 긍정적 측면은? (해당하는 것 모두 선택)", ai_benefits_options: { "accessibility": "창작의 접근성 향상", "efficiency": "제작 시간/비용 절감", "creativity": "새로운 창의적 가능성", "education": "교육/학습 도구", "entertainment": "엔터테인먼트 다양화", "democratization": "창작의 대중화", "none": "긍정적 측면 없음", "other": "기타" },
+        label_used_tools: "사용해 본 AI 이미지/영상 생성 도구를 모두 선택해주세요. (해당하는 것 모두 선택)", used_tools_options: { "chatgpt": "ChatGPT (DALL-E 3)", "copilot": "Microsoft Copilot", "midjourney": "Midjourney", "stable-diffusion": "Stable Diffusion", "gemini": "Google Gemini (Imagen 3)", "firefly": "Adobe Firefly", "kling": "Kling", "hailuo": "Hailuo", "veo3": "Veo3 (Google)", "higgsfield": "Higgsfield", "none": "없음", "other": "기타" },
+        label_strategy: "이미지 구분 시, 주로 어떤 단서를 활용하셨나요? (해당하는 것 모두 선택)", strategy_options: { "hands": "손/손가락 모양의 이상함", "eyes": "눈/치아 등 얼굴 세부사항의 부자연스러움", "background": "배경의 일관성/왜곡", "texture": "피부나 옷감의 질감", "painting-like": "지나치게 그림같거나 인위적인 느낌", "lighting": "비현실적으로 완벽한 조명", "beauty": "과도하게 이상화된 외모", "symmetry": "부자연스러운 대칭성", "text": "글자/텍스트의 비정상적 표현", "feeling": "전반적인 위화감", "dont-know": "잘 모르겠다", "random": "무작위로 선택했다", "other": "기타 (직접 서술)" },
+        label_suggestions: "실험에 대한 의견이나 제안사항이 있으시면 자유롭게 작성해주세요 (선택사항)", placeholder_suggestions: "예: 실험 지시가 명확했어요 / 이미지가 더 다양했으면 좋겠어요 등",
+        label_consent: "본인은 위 내용을 이해했으며, 연구 참여 및 데이터의 익명화된 형태의 학술적 활용(논문 출판 등)에 동의합니다.",
+        submit_btn: "최종 제출하고 결과 보기",
+        alert_all_fields: "현재 페이지의 모든 필수 항목을 입력해주세요.", alert_consent: "연구 활용에 동의해주셔야 결과 확인이 가능합니다.",
+        results_title: "실험 결과", final_accuracy_label: "전체 정답률", label_real_accuracy: "Real 이미지 정답률", label_ai_accuracy: "AI 이미지 정답률",
+        share_btn: "결과 공유하기", restart_btn: "실험 다시 시작하기", clipboard_alert: "결과가 클립보드에 복사되었습니다. 직접 공유해주세요!",
+        share_title: "Real vs AI 실험 결과",
+        share_text_template: "[진짜 vs AI 이미지 구분 실험] 나의 칭호는 '{titleText}' 입니다! 정확도: {accuracy}\n당신도 지금 바로 도전해보세요!",
+        share_fallback_alert: "결과 텍스트가 클립보드에 복사되었습니다.\n\n이제 이미지를 다운로드한 후, 카카오톡 같은 앱에 직접 텍스트를 붙여넣고 이미지를 첨부하여 공유해주세요!",
+        share_download_button: "이미지 다운로드"
+      },
+      en: {
+        loading_practice: "Loading practice trials...",
+        practice_title: "Practice Trials", fixation_instruction: "Please fix your gaze on the '+' sign", practice_subtitle: "Is this a real photo or an AI-generated image?",
+        welcome_title: "Real vs AI Image Classification Test (Lite Ver.)", welcome_en_title: "Experiment Instructions", welcome_en_desc: "You have just completed practice trials distinguishing between real and AI-generated images.", welcome_en_plus_desc: "The main experiment will now begin. The + sign is a fixation point to help you focus before the next image appears.", welcome_en_trials: "<strong>Total Trials:</strong> 20", start_en_btn: "Start Main Experiment (English)",
+        affiliation: "Dept. of Bio-Healthcare, Hwasung Medi-Science University",
+        practice_feedback_correct: "Correct! The answer was ", practice_feedback_wrong: "Incorrect. The answer was ", next_practice_btn: "Next Practice Trial",
+        stats_trial: "Trial", real_btn: "REAL", ai_btn: "AI",
+        intermission_title: "Trial {trial}/{total} Complete!", intermission_desc: "Feel free to take a short break. Press the button when you're ready.", next_trial_btn: "Next Trial",
+        pause_title: "You are on a break", pause_desc: "When you are ready, press the button below to resume.", resume_btn: "Resume Experiment",
+        pre_survey_title: "Research Participation Information & Consent",
+        pre_survey_button: "I have read the information and agree to participate in the survey",
+        survey_title: "Participant Info & Survey", survey_notice: "To see your results, you must complete the survey and consent to participate on the final page.", survey_desc: "This study is conducted to analyze human perceptual characteristics regarding AI-generated images. All responses will be processed anonymously and used for research purposes only.",
+        label_nationality: "Nationality", placeholder_nationality: "e.g., USA, South Korea", label_email: "Email Address", placeholder_email: "e.g., example@email.com", label_first_time: "Is this your first time participating in this experiment?", first_time_options: { "": "Select", "yes": "Yes (First time)", "no": "No (Repeat participation)" }, label_repeat_count: "Please enter which participation this is", placeholder_repeat_count: "e.g., 2", label_age: "Age", placeholder_age: "e.g., 25", label_gender: "Gender", gender_options: { "": "Select", male: "Male", female: "Female", "prefer-not-to-say": "Prefer not to say" }, label_occupation: "Occupation", occupation_not_to_say: "Prefer not to say", placeholder_occupation: "e.g., Student, Designer",
+        label_mbti: "Optional: MBTI", 
+        mbti_options: { "": "Select", "ISFJ": "ISFJ", "ESFJ": "ESFJ", "ISTJ": "ISTJ", "ISFP": "ISFP", "ESTJ": "ESTJ", "ESFP": "ESFP", "ENFP": "ENFP", "ISTP": "ISTP", "INFP": "INFP", "ESTP": "ESTP", "INTP": "INTP", "ENFJ": "ENFJ", "ENTP": "ENTP", "ENTJ": "ENTJ", "INFJ": "INFJ", "INTJ": "INTJ", "prefer-not-to-say": "Prefer not to say" },
+        select_all_text: "Select All", deselect_all_text: "Deselect All",
+        label_ai_exposure_frequency: "How often do you encounter AI-generated images/videos in daily life?", ai_exposure_frequency_options: { "": "Select", "daily": "Daily", "weekly": "3-4 times a week", "sometimes": "1-2 times a week", "rarely": "1-2 times a month", "never": "Almost never" },
+        label_ai_exposure_sources: "Where do you mainly encounter AI-generated images/videos? (Select all that apply)", ai_exposure_sources_options: { "instagram": "Instagram", "youtube": "YouTube", "twitter": "X (Twitter)", "tiktok": "TikTok", "facebook": "Facebook", "news": "News/Media", "elevator": "Elevator/Subway ads", "tv": "TV ads/Programs", "shopping": "E-commerce", "none": "None", "other": "Other (please specify)" },
+        label_ai_confidence: "How confident are you in distinguishing AI-generated images?", ai_confidence_options: { "": "Select", "very-confident": "Very confident", "confident": "Confident", "neutral": "Neutral", "not-confident": "Not confident", "very-not-confident": "Very not confident" },
+        label_ai_attitude: "What is your overall attitude towards AI-generated images/videos?", ai_attitude_options: { "": "Select", "very-positive": "Very positive", "positive": "Positive", "neutral": "Neutral", "negative": "Negative", "very-negative": "Very negative" },
+        label_ai_concerns: "What concerns do you have about AI-generated content? (Select all that apply)", ai_concerns_options: { "fake-news": "Spread of fake news/misinformation", "copyright": "Copyright/creator rights infringement", "job-loss": "Loss of creative jobs", "authenticity": "Loss of authenticity/trust", "deepfake": "Deepfake abuse", "quality": "Decline in artistic value", "none": "No concerns", "other": "Other" },
+        label_ai_benefits: "What are the positive aspects of AI-generated content? (Select all that apply)", ai_benefits_options: { "accessibility": "Improved accessibility to creation", "efficiency": "Time/cost savings", "creativity": "New creative possibilities", "education": "Educational/learning tools", "entertainment": "Entertainment diversification", "democratization": "Making creation accessible", "none": "No positive aspects", "other": "Other" },
+        label_used_tools: "Please select all AI image/video generation tools you have used. (Select all that apply)", used_tools_options: { "chatgpt": "ChatGPT (DALL-E 3)", "copilot": "Microsoft Copilot", "midjourney": "Midjourney", "stable-diffusion": "Stable Diffusion", "gemini": "Google Gemini (Imagen 3)", "firefly": "Adobe Firefly", "kling": "Kling", "hailuo": "Hailuo", "veo3": "Veo3 (Google)", "higgsfield": "Higgsfield", "none": "None", "other": "Other" },
+        label_strategy: "What clues did you primarily use to distinguish the images? (Select all that apply)", strategy_options: { "hands": "Abnormal hands/fingers shape", "eyes": "Unnatural facial details (eyes/teeth)", "background": "Background inconsistency/distortion", "texture": "Texture of skin or fabric", "painting-like": "Overly painting-like or artificial quality", "lighting": "Unrealistically perfect lighting", "beauty": "Excessively idealized appearance", "symmetry": "Unnatural symmetry", "text": "Abnormal text/lettering", "feeling": "Overall unsettling feeling", "dont-know": "Don't know", "random": "Random guessing", "other": "Other (please specify)" },
+        label_suggestions: "Please feel free to share any comments or suggestions about the experiment (Optional)", placeholder_suggestions: "e.g., The instructions were clear, etc.",
+        label_consent: "I understand the above and consent to participate in the research and to the use of my anonymized data for academic purposes (e.g., publication).",
+        submit_btn: "Submit and See Results",
+        alert_all_fields: "Please fill in all required fields on the current page.", alert_consent: "You must consent to the use of data to see the results.",
+        results_title: "Experiment Results", final_accuracy_label: "Overall Accuracy", label_real_accuracy: "Real Image Accuracy", label_ai_accuracy: "AI Image Accuracy",
+        share_btn: "Share Results", restart_btn: "Restart Test", clipboard_alert: "Results copied to clipboard. Please share it!",
+        share_title: "Real vs AI Experiment Results",
+        share_text_template: "[Real vs AI Image Test] My title is '{titleText}'! Accuracy: {accuracy}\nChallenge yourself now!",
+        share_fallback_alert: "The result text has been copied to your clipboard.\n\nPlease download the image now, then paste the text and attach the image in your app (e.g., messenger, social media) to share.",
+        share_download_button: "Download Image"
+      }
+    };
+    // ▲▲▲ 수정된 부분: i18n 객체에 IRB 안내 텍스트 추가 ▲▲▲
+
+
+    function shuffle(array) {
+      if (!array) return [];
+      let newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+
+    function setupDOMElements() {
+        // ▼▼▼ 수정된 부분: DOMElements 목록에 새 화면 추가 ▼▼▼
+        const ids = [
+            'mainContainer', 'welcome', 'experiment-area', 'fixation', 'image', 'buttons', 'stats-text', 
+            'surveyForm', 'progressBar', 'trialCount', 'submitBtn', 'results-modal', 'feedback', 'practice-title', 
+            'question-text', 'welcome-affiliation',
+            'intermission', 'intermission-title', 'next-trial-btn', 'pause-screen', 'pause-title', 'pause-desc', 'resume-btn',
+            'welcome-screen', 'device-selection-screen', 'loading-spinner-screen', 'start-test-btn', 'loading-text',
+            'pre-survey-notice-screen'
+        ];
+        // ▲▲▲ 수정된 부분: DOMElements 목록에 새 화면 추가 ▲▲▲
+        ids.forEach(id => { if(document.getElementById(id)) DOMElements[id] = document.getElementById(id); });
+    }
+
+    function showScreen(screenToShow) {
+        // ▼▼▼ 수정된 부분: 화면 전환 목록에 새 화면 추가 ▼▼▼
+        ['welcome-screen', 'device-selection-screen', 'loading-spinner-screen', 'welcome', 'experiment-area', 'surveyForm', 'intermission', 'pause-screen', 'pre-survey-notice-screen'].forEach(screen => {
+            if (DOMElements[screen]) DOMElements[screen].style.display = 'none';
+        });
+        // ▲▲▲ 수정된 부분: 화면 전환 목록에 새 화면 추가 ▲▲▲
+        if (DOMElements[screenToShow]) {
+            DOMElements[screenToShow].style.display = 'block';
+        }
+    }
+    
+    function showSurveyPage(page) {
+        document.querySelectorAll('.survey-page').forEach(p => p.style.display = 'none');
+        document.getElementById(`survey-page-${page}`).style.display = 'block';
+        const surveyProgressBar = document.getElementById('surveyProgressBar');
+        if (surveyProgressBar) surveyProgressBar.style.width = (page / totalSurveyPages) * 100 + '%';
+        const surveyProgressText = document.getElementById('survey-progress-text');
+        if (surveyProgressText) surveyProgressText.innerText = `(${page}/${totalSurveyPages})`;
+        document.getElementById('prevBtn').style.display = page === 1 ? 'none' : 'inline-block';
+        document.getElementById('nextBtn').style.display = page === totalSurveyPages ? 'none' : 'inline-block';
+        document.getElementById('submitBtn').style.display = page === totalSurveyPages ? 'block' : 'none';
+    }
+
+    function validateCurrentPage() {
+        const pageContainer = document.getElementById(`survey-page-${currentSurveyPage}`);
+        let isValid = true;
+        const requiredFields = pageContainer.querySelectorAll('input[required], select[required], textarea[required]');
+        for (const field of requiredFields) {
+            if (!field.value.trim() || (field.type === 'checkbox' && !field.checked)) {
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) {
+            alert(i18n[currentLang].alert_all_fields);
+            return false;
+        }
+        const requiredGroups = pageContainer.querySelectorAll('label.required + .checkbox-group');
+        for (const group of requiredGroups) {
+            const isAnyChecked = group.querySelector('input[type="checkbox"]:checked');
+            if (!isAnyChecked) {
+                alert(i18n[currentLang].alert_all_fields);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function createCheckboxes(containerId, options) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        const name = containerId.replace('-checkboxes', '');
+        const hasNone = 'none' in options;
+        const hasOther = 'other' in options;
+        const topControls = document.createElement('div');
+        topControls.style.display = 'flex';
+        topControls.style.justifyContent = 'space-between';
+        topControls.style.marginBottom = '10px';
+        const selectAllContainer = document.createElement('label');
+        selectAllContainer.style.fontWeight = 'bold';
+        const selectAllCheckbox = document.createElement('input');
+        selectAllCheckbox.type = 'checkbox';
+        selectAllCheckbox.className = 'select-all';
+        selectAllContainer.appendChild(selectAllCheckbox);
+        selectAllContainer.append(` ${i18n[currentLang].select_all_text}`);
+        topControls.appendChild(selectAllContainer);
+        let noneCheckbox = null;
+        if (hasNone) {
+            const noneContainer = document.createElement('label');
+            noneCheckbox = document.createElement('input');
+            noneCheckbox.type = 'checkbox';
+            noneCheckbox.name = name;
+            noneCheckbox.value = 'none';
+            noneContainer.appendChild(noneCheckbox);
+            noneContainer.append(` ${options.none}`);
+            topControls.appendChild(noneContainer);
+        }
+        container.appendChild(topControls);
+        container.appendChild(document.createElement('hr'));
+        const regularCheckboxes = [];
+        const otherContainer = document.createElement('div');
+        for (const [value, text] of Object.entries(options)) {
+            if (value === 'none') continue;
+            const label = document.createElement('label');
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = name;
+            checkbox.value = value;
+            label.appendChild(checkbox);
+            label.append(` ${text}`);
+            if (value === 'other') {
+                checkbox.className = 'other-option';
+                otherContainer.appendChild(label);
+            } else {
+                checkbox.className = 'regular-option';
+                container.appendChild(label);
+                regularCheckboxes.push(checkbox);
+            }
+        }
+        container.appendChild(otherContainer);
+        const otherCheckbox = otherContainer.querySelector('.other-option');
+        selectAllCheckbox.addEventListener('change', () => {
+            regularCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+            if (selectAllCheckbox.checked && noneCheckbox) noneCheckbox.checked = false;
+        });
+        regularCheckboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                selectAllCheckbox.checked = regularCheckboxes.every(rcb => rcb.checked);
+                if (cb.checked && noneCheckbox) noneCheckbox.checked = false;
+            });
+        });
+        if (noneCheckbox) {
+            noneCheckbox.addEventListener('change', () => {
+                if (noneCheckbox.checked) {
+                    regularCheckboxes.forEach(cb => cb.checked = false);
+                    if (otherCheckbox) {
+                        otherCheckbox.checked = false;
+                        const otherTextInput = document.getElementById(name + '-other');
+                        if (otherTextInput) otherTextInput.style.display = 'none';
+                    }
+                    selectAllCheckbox.checked = false;
+                }
+            });
+        }
+        if (otherCheckbox) {
+            otherCheckbox.addEventListener('change', (e) => {
+                const otherTextInput = document.getElementById(name + '-other');
+                if (otherTextInput) {
+                    otherTextInput.style.display = e.target.checked ? 'block' : 'none';
+                }
+                if (e.target.checked && noneCheckbox) {
+                    noneCheckbox.checked = false;
+                }
+            });
+        }
+    }
+
+    function addDeselectAllFeature(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const topControls = container.querySelector('div');
+        if (!topControls) return;
+        const deselectAllButton = document.createElement('button');
+        deselectAllButton.innerText = i18n[currentLang].deselect_all_text;
+        deselectAllButton.type = 'button';
+        deselectAllButton.style.cssText = `
+            background: none; border: none; color: var(--primary-color); 
+            text-decoration: underline; cursor: pointer; font-size: 14px; padding: 0; margin-left: 15px;
+        `;
+        deselectAllButton.onclick = () => {
+            container.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                if(cb.className === 'other-option'){
+                   const otherTextInput = document.getElementById(containerId.replace('-checkboxes', '') + '-other');
+                   if(otherTextInput) otherTextInput.style.display = 'none';
+                }
+            });
+        };
+        topControls.querySelector('label').insertAdjacentElement('afterend', deselectAllButton);
+    }
+    
+    function selectDevice(type) {
+        deviceType = type;
+        showScreen('loading-spinner-screen');
+        DOMElements['loading-text'].innerHTML = `${i18n.ko.loading_practice}<br>${i18n.en.loading_practice}`;
+        startInitialPractice();
+    }
+
+    function updatePracticeTitle() {
+        const titleKo = `${i18n.ko.practice_title} (${currentPracticeTrial + 1}/${practiceTrials.length})`;
+        const titleEn = `${i18n.en.practice_title} (${currentPracticeTrial + 1}/${practiceTrials.length})`;
+        const subtitleKo = i18n.ko.practice_subtitle;
+        const subtitleEn = i18n.en.practice_subtitle;
+        DOMElements['practice-title'].innerHTML = `${titleKo}<br>${titleEn}<br><span style="font-size: 18px; font-weight: normal;">${subtitleKo}<br>${subtitleEn}</span>`;
+    }
+
+    function startInitialPractice() {
+        showScreen('experiment-area');
+        participantId = 'P' + Date.now() + Math.random().toString(36).substr(2, 5) + '_' + (deviceType || 'unknown');
+        const realSample = shuffle(images.real).slice(0, 2);
+        const chatgptSample = shuffle(images.chatgpt).slice(0, 1);
+        const geminiSample = shuffle(images.gemini).slice(0, 1);
+        practiceTrials = shuffle([...realSample, ...chatgptSample, ...geminiSample]);
+        practiceTrials.forEach(img => usedImages.add(img.id));
+        isPractice = true;
+        currentPracticeTrial = 0;
+        DOMElements['practice-title'].style.display = 'block';
+        updatePracticeTitle();
+        DOMElements['question-text'].style.display = 'none';
+        DOMElements['stats-text'].style.display = 'none';
+        if (DOMElements.progressBar) DOMElements.progressBar.parentElement.style.display = 'none';
+        showPracticeTrial();
+    }
+
+    function showPracticeTrial() {
+        const practiceImg = practiceTrials[currentPracticeTrial];
+        showFixation(() => {
+            DOMElements.image.src = practiceImg.url;
+            DOMElements.image.onload = () => {
+                DOMElements.image.style.display = 'block';
+                DOMElements.buttons.style.display = 'flex';
+                setupButtons(practiceImg, 'practice');
+            };
+        });
+    }
+
+    function showWelcomeScreen() {
+        showScreen('welcome');
+        const t = i18n.ko;
+        const te = i18n.en;
+        document.getElementById('welcome-title').innerText = `${t.welcome_title}`;
+        document.getElementById('welcome-ko-title').innerText = t.welcome_ko_title;
+        document.getElementById('welcome-ko-desc').innerText = t.welcome_ko_desc;
+        document.getElementById('welcome-ko-plus-desc').innerText = t.welcome_ko_plus_desc;
+        document.getElementById('welcome-ko-trials').innerHTML = t.welcome_ko_trials;
+        document.getElementById('start-ko').innerText = t.start_ko_btn;
+        document.getElementById('welcome-en-title').innerText = te.welcome_en_title;
+        document.getElementById('welcome-en-desc').innerText = te.welcome_en_desc;
+        document.getElementById('welcome-en-plus-desc').innerText = te.welcome_en_plus_desc;
+        document.getElementById('welcome-en-trials').innerHTML = te.welcome_en_trials;
+        document.getElementById('start-en').innerText = te.start_en_btn;
+        DOMElements['welcome-affiliation'].innerHTML = `${t.affiliation}<br>${te.affiliation}`;
+    }
+
+    function startMainExperiment(lang) {
+        currentLang = lang;
+        isPractice = false;
+        currentTrial = 0;
+        correctAnswers = 0;
+        responses = [];
+        let availableReal = shuffle(images.real.filter(img => !usedImages.has(img.id)));
+        let availableChatgpt = shuffle(images.chatgpt.filter(img => !usedImages.has(img.id)));
+        let availableGemini = shuffle(images.gemini.filter(img => !usedImages.has(img.id)));
+        const mainExperimentUsedIds = new Set();
+        const finalTrials = [];
+        for (const img of availableReal) {
+            if (finalTrials.filter(t => t.type === 'real').length >= 10) break;
+            if (!mainExperimentUsedIds.has(img.id)) {
+                finalTrials.push(img);
+                mainExperimentUsedIds.add(img.id);
+            }
+        }
+        for (const img of availableChatgpt) {
+            if (finalTrials.filter(t => t.type.includes('chatgpt')).length >= 5) break;
+            if (!mainExperimentUsedIds.has(img.id)) {
+                finalTrials.push(img);
+                mainExperimentUsedIds.add(img.id);
+            }
+        }
+        for (const img of availableGemini) {
+            if (finalTrials.filter(t => t.type.includes('gemini')).length >= 5) break;
+            if (!mainExperimentUsedIds.has(img.id)) {
+                finalTrials.push(img);
+                mainExperimentUsedIds.add(img.id);
+            }
+        }
+        trials = shuffle(finalTrials);
+        totalTrials = trials.length;
+        updateUIText();
+        showScreen('experiment-area');
+        DOMElements['practice-title'].style.display = 'none';
+        DOMElements['question-text'].style.display = 'block';
+        DOMElements['stats-text'].style.display = 'block';
+        if (DOMElements.progressBar) DOMElements.progressBar.parentElement.style.display = 'block';
+        nextTrial();
+    }
+    
+    function handleError(error) { 
+        console.error('An error occurred: ', error);
+        DOMElements.mainContainer.innerHTML = '<h2>Error</h2><p>An error occurred. Please refresh and try again.</p>'; 
+    }
+
+    function nextTrial() {
+        if (!isPractice) {
+            currentTrial++;
+        }
+        if (!isPractice && currentTrial > totalTrials) {
+            endExperiment();
+            return;
+        }
+        showScreen('experiment-area');
+        updateProgress();
+        DOMElements.image.style.display = 'none';
+        DOMElements.buttons.style.display = 'none';
+        showFixation(() => {
+            let currentImg = isPractice ? practiceTrials[currentPracticeTrial] : trials[currentTrial - 1];
+            DOMElements.image.src = currentImg.url;
+            DOMElements.image.onload = () => {
+                DOMElements.image.style.display = 'block';
+                DOMElements.buttons.style.display = 'flex';
+                setupButtons(currentImg, isPractice ? 'practice' : 'mainExperiment');
+            };
+        });
+    }
+
+    function setupButtons(img, stage) {
+      let startTime = performance.now();
+      const handleResponse = (response) => {
+        let rt = Math.round(performance.now() - startTime);
+        let isCorrect = (response === 'REAL' && img.type === 'real') || (response === 'AI' && img.type.startsWith('ai'));
+        
+        const responseData = { 
+            participantId, 
+            trial: (stage === 'practice' ? `Practice_${currentPracticeTrial + 1}` : currentTrial), 
+            imageType: img.type, 
+            response, 
+            isCorrect, 
+            rt, 
+            imageId: img.id, 
+            deviceType,
+            appVersion: APP_VERSION
+        };
+        db.collection("responses").add(responseData).catch((error) => console.error("Error writing response to Firestore: ", error));
+
+        if (stage === 'practice') {
+            DOMElements.buttons.style.display = 'none';
+            DOMElements.feedback.style.display = 'block';
+            DOMElements.feedback.className = isCorrect ? 'correct' : 'wrong';
+            const answerType = img.type === 'real' ? 'REAL' : 'AI';
+            const feedbackTextKo = (isCorrect ? i18n.ko.practice_feedback_correct : i18n.ko.practice_feedback_wrong) + answerType;
+            const feedbackTextEn = (isCorrect ? i18n.en.practice_feedback_correct : i18n.en.practice_feedback_wrong) + answerType;
+            DOMElements.feedback.innerHTML = `${feedbackTextKo}<br>${feedbackTextEn}`;
+
+            if (currentPracticeTrial < practiceTrials.length - 1) {
+                DOMElements.feedback.innerHTML += `<br><button id="nextPracticeBtn" class="btn" style="margin-top: 20px; padding: 10px 20px; font-size: 16px;">${i18n.ko.next_practice_btn}</button>`;
+                setTimeout(() => {
+                    document.getElementById('nextPracticeBtn').onclick = () => {
+                        currentPracticeTrial++;
+                        DOMElements.feedback.style.display = 'none';
+                        DOMElements.image.style.display = 'none';
+                        updatePracticeTitle();
+                        showPracticeTrial();
+                    };
+                }, 100);
+            } else {
+                const startMainText = `${i18n.ko.start_ko_btn}<br>(${i18n.en.start_en_btn})`;
+                DOMElements.feedback.innerHTML += `<br><button id="startMainBtn" class="btn" style="margin-top: 20px; padding: 10px 20px; font-size: 16px; line-height: 1.4;">${startMainText}</button>`;
+                setTimeout(() => {
+                    document.getElementById('startMainBtn').onclick = () => {
+                        DOMElements.feedback.style.display = 'none';
+                        DOMElements.image.style.display = 'none';
+                        showWelcomeScreen();
+                    };
+                }, 100);
+            }
+        } else {
+            if (isCorrect) correctAnswers++;
+            responses.push(responseData);
+            showIntermissionScreen();
+        }
+      };
+      document.getElementById('realBtn').onclick = () => handleResponse('REAL');
+      document.getElementById('aiBtn').onclick = () => handleResponse('AI');
+    }
+
+    function showIntermissionScreen() {
+        if (currentTrial >= totalTrials) {
+            endExperiment();
+            return;
+        }
+        showScreen('intermission');
+        const t = i18n[currentLang];
+        DOMElements['intermission-title'].innerText = t.intermission_title.replace('{trial}', currentTrial).replace('{total}', totalTrials);
+        const intermissionDesc = document.getElementById('intermission-desc');
+        if(intermissionDesc) intermissionDesc.innerText = t.intermission_desc;
+        DOMElements['next-trial-btn'].innerText = t.next_trial_btn;
+        DOMElements['next-trial-btn'].onclick = () => { nextTrial(); };
+    }
+
+    function showFixation(callback) {
+      DOMElements.fixation.style.display = 'block';
+      setTimeout(() => { DOMElements.fixation.style.display = 'none'; callback(); }, 1000);
+    }
+
+    function updateProgress() {
+      if(DOMElements.progressBar) DOMElements.progressBar.style.width = (currentTrial / totalTrials) * 100 + '%';
+      if(DOMElements.trialCount) DOMElements.trialCount.textContent = currentTrial;
+    }
+
+    // ▼▼▼ 수정된 부분: endExperiment 함수가 IRB 안내 화면을 먼저 표시하도록 변경 ▼▼▼
+    function endExperiment() { 
+        showScreen('pre-survey-notice-screen');
+        const t = i18n[currentLang];
+        document.getElementById('pre-survey-title').innerText = t.pre_survey_title;
+        document.getElementById('proceed-to-survey-btn').innerText = t.pre_survey_button;
+    }
+    // ▲▲▲ 수정된 부분: endExperiment 함수가 IRB 안내 화면을 먼저 표시하도록 변경 ▲▲▲
+    
+    function getNuancedResultTitle(data) {
+        const { overallAccuracy, responses, totalTrials } = data;
+        const baseImagePath = "https://raw.githubusercontent.com/gdrpaul3-byte/real_vs_fake_2/main/";
+
+        if (totalTrials === 0) {
+            return { ko: "결과 없음", en: "No Results", desc_ko: "실험에 참여해주셔서 감사합니다.", desc_en: "Thank you for participating.", img: "" };
+        }
+
+        const realClickCount = responses.filter(r => r.response === 'REAL').length;
+        const realClickRatio = realClickCount / totalTrials;
+
+        if (realClickRatio >= 0.90) { return { ko: "의심 없는 현실주의자", en: "The Believer", desc_ko: "모든 것이 진짜라고 믿는 긍정적인 마음을 가졌지만, 교묘한 AI의 흔적을 놓치기도 합니다.", desc_en: "You have a positive mindset, ready to believe things are real, but this sometimes causes you to miss the subtle tricks of AI.", img: baseImagePath + "believer_otter_512.png" }; }
+        if (realClickRatio <= 0.10) { return { ko: "깐깐한 AI 감별사", en: "The Skeptic", desc_ko: "AI의 흔적을 찾으려는 날카로운 눈을 가졌지만, 너무 신중한 나머지 진짜마저 의심하기도 합니다.", desc_en: "You have a sharp eye for spotting AI's flaws, but your skepticism sometimes leads you to doubt reality itself.", img: baseImagePath + "skeptic_otter_512.png" }; }
+        if (overallAccuracy >= 95) { return { ko: "진실을 꿰뚫는 눈", en: "Eagle Eye", desc_ko: "당신의 눈은 속일 수 없습니다! 진짜와 AI의 미세한 차이까지 완벽하게 간파하는군요.", desc_en: "Your eyes cannot be deceived! You perfectly discern even the most subtle differences between real and AI.", img: baseImagePath + "eagle_eye_otter_512.png" }; } 
+        if (overallAccuracy >= 85) { return { ko: "별추적자", en: "Stargazer", desc_ko: "별자리를 잇듯 단서를 연결해냅니다. 높은 관찰력으로 대부분의 AI 이미지를 정확히 구별합니다.", desc_en: "You connect the dots like a stargazer. With sharp observation, you accurately distinguish most AI images.", img: baseImagePath + "stargazer_otter_512.png" }; } 
+        if (overallAccuracy >= 70) { return { ko: "명탐정의 자질", en: "Keen Detective", desc_ko: "단서를 놓치지 않는 탐정의 자질이 보입니다. 평균 이상의 실력으로 진짜와 가짜를 구분합니다.", desc_en: "You have the qualities of a detective who doesn't miss a clue. You distinguish real from fake with above-average skill.", img: baseImagePath + "keen_detective_otter_512.png" }; } 
+        if (overallAccuracy >= 50) { return { ko: "평범한 눈", en: "Average Observer", desc_ko: "진짜와 AI의 구분이 쉽지 않으셨군요. 많은 사람들이 당신과 비슷한 수준의 정확도를 보입니다.", desc_en: "Distinguishing between real and AI wasn't easy. Many people show a similar level of accuracy.", img: baseImagePath + "average_observer_otter_512.png" }; } 
+        if (overallAccuracy >= 30) { return { ko: "아리송한 세상", en: "Easily Fooled", desc_ko: "진짜 같은 AI, AI 같은 진짜 이미지에 조금 헷갈리셨군요. 다시 한번 도전해보세요!", desc_en: "You were a bit confused by the realistic AI and artificial-looking real images. Try again!", img: baseImagePath + "easily_fooled_otter_512.png" }; } 
+        
+        return { ko: "AI 까막눈", en: "AI-Illiterate", desc_ko: "AI가 만든 세상이 아직은 낯설게 느껴지시나 봐요. 괜찮아요, 이제부터 알아가면 되죠!", desc_en: "The world created by AI seems unfamiliar to you. That's okay—now is a great time to start learning!", img: baseImagePath + "ai_illiterate_otter_512.png" };
+    }
+
+    async function shareResult() {
+        const t = i18n[currentLang];
+        const resultsCard = document.querySelector('.results-card');
+        const shareButtons = resultsCard.querySelectorAll('.btn');
+        shareButtons.forEach(btn => btn.style.visibility = 'hidden');
+
+        try {
+            const canvas = await html2canvas(resultsCard, { useCORS: true, scale: 2 });
+            shareButtons.forEach(btn => btn.style.visibility = 'visible');
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const file = new File([blob], 'real_vs_ai_result.png', { type: 'image/png' });
+            const filesArray = [file];
+            const titleText = document.getElementById('result-title-text').innerText;
+            const accuracy = document.getElementById('final-accuracy').innerText;
+            
+            const shareText = t.share_text_template
+                .replace('{titleText}', titleText)
+                .replace('{accuracy}', accuracy);
+
+            if (navigator.canShare && navigator.canShare({ files: filesArray })) {
+                await navigator.share({
+                    files: filesArray,
+                    title: t.share_title,
+                    text: `${shareText}\n${RESTART_URL}`
+                });
+            } else {
+                throw new Error('Web Share API not supported.');
+            }
+        } catch (err) {
+            shareButtons.forEach(btn => btn.style.visibility = 'visible');
+            
+            const titleText = document.getElementById('result-title-text').innerText;
+            const accuracy = document.getElementById('final-accuracy').innerText;
+
+            const shareText = t.share_text_template
+                .replace('{titleText}', titleText)
+                .replace('{accuracy}', accuracy);
+            const clipboardText = `${shareText}\n${RESTART_URL}`;
+            
+            navigator.clipboard.writeText(clipboardText).then(async () => {
+                alert(t.share_fallback_alert);
+
+                const canvas = await html2canvas(resultsCard, { useCORS: true, scale: 2 });
+                const imageURL = canvas.toDataURL('image/png');
+                
+                const existingDownloadBtn = document.getElementById('download-result-image-btn');
+                if (existingDownloadBtn) {
+                    existingDownloadBtn.remove();
+                }
+
+                const downloadButton = document.createElement('a');
+                downloadButton.href = imageURL;
+                downloadButton.download = 'real_vs_ai_result.png';
+                downloadButton.innerText = t.share_download_button;
+                downloadButton.className = 'btn';
+                downloadButton.id = 'download-result-image-btn';
+                downloadButton.style.marginTop = '10px';
+                downloadButton.style.backgroundColor = '#6c757d';
+                
+                resultsCard.appendChild(downloadButton);
+
+            }).catch(clipErr => {
+                console.error('Clipboard copy failed: ', clipErr);
+                alert('Error copying results. Please copy manually.');
+            });
+        }
+    }
+    
+    function showResults(data) {
+        document.getElementById('mainContainer').style.display = 'none';
+        const resultsModal = document.getElementById('results-modal');
+        resultsModal.style.display = 'flex';
+        const t = i18n[currentLang];
+        const titleData = getNuancedResultTitle(data);
+        const realTotal = data.responses.filter(r => r.imageType === 'real').length;
+        const realCorrect = data.responses.filter(r => r.imageType === 'real' && r.isCorrect).length;
+        const aiTotal = data.responses.filter(r => r.imageType.startsWith('ai')).length;
+        const aiCorrect = data.responses.filter(r => r.imageType.startsWith('ai') && r.isCorrect).length;
+        document.getElementById('results-title').innerText = t.results_title;
+        document.getElementById('result-title-image').src = titleData.img;
+        document.getElementById('result-title-text').innerText = `${titleData.ko} (${titleData.en})`;
+        document.getElementById('result-title-desc').innerText = currentLang === 'ko' ? titleData.desc_ko : titleData.desc_en;
+        document.getElementById('final-accuracy-label').innerText = t.final_accuracy_label;
+        document.getElementById('final-accuracy').innerText = `${data.overallAccuracy}%`;
+        document.getElementById('final-score').innerText = `(${data.score}/${data.totalTrials})`;
+        document.getElementById('label-real-accuracy').innerText = t.label_real_accuracy;
+        document.getElementById('label-ai-accuracy').innerText = t.label_ai_accuracy;
+        document.getElementById('real-accuracy-value').innerText = `${data.realAccuracy}% (${realCorrect}/${realTotal})`;
+        document.getElementById('ai-accuracy-value').innerText = `${data.aiAccuracy}% (${aiCorrect}/${aiTotal})`;
+        document.getElementById('real-accuracy-bar').style.width = `${data.realAccuracy}%`;
+        document.getElementById('ai-accuracy-bar').style.width = `${data.aiAccuracy}%`;
+        document.getElementById('results-affiliation').innerText = t.affiliation;
+        document.getElementById('share-button').innerText = t.share_btn;
+        document.getElementById('share-button').onclick = shareResult;
+        const restartButton = document.getElementById('restart-button');
+        restartButton.innerText = t.restart_btn;
+        restartButton.onclick = () => { window.open(RESTART_URL, '_self'); };
+    }
+
+    function setupEventListeners() {
+      document.getElementById('start-ko').onclick = () => startMainExperiment('ko');
+      document.getElementById('start-en').onclick = () => startMainExperiment('en');
+      
+      // ▼▼▼ 수정된 부분: IRB 안내 화면의 버튼 이벤트 리스너 추가 ▼▼▼
+      document.getElementById('proceed-to-survey-btn').onclick = () => {
+        showScreen('surveyForm');
+        showSurveyPage(1);
+      };
+      // ▲▲▲ 수정된 부분: IRB 안내 화면의 버튼 이벤트 리스너 추가 ▲▲▲
+
+      document.getElementById('first-time').addEventListener('change', function() {
+        document.getElementById('repeat-count-group').style.display = (this.value === 'no') ? 'block' : 'none';
+        if (this.value === 'yes') { document.getElementById('repeat-count').value = ''; }
+      });
+      document.getElementById('nextBtn').onclick = () => { if (validateCurrentPage()) { currentSurveyPage++; showSurveyPage(currentSurveyPage); } };
+      document.getElementById('prevBtn').onclick = () => { currentSurveyPage--; showSurveyPage(currentSurveyPage); };
+      const submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.onclick = function() {
+          if (!validateCurrentPage()) return;
+          const getCheckedValues = (id) => Array.from(document.querySelectorAll(`#${id} input[type="checkbox"]:checked`)).map(cb => cb.value).join(', ');
+          
+          const surveyData = {
+              participantId, 
+              language: currentLang,
+              appVersion: APP_VERSION,
+              nationality: document.getElementById('nationality').value, 
+              
+              firstTime: document.getElementById('first-time').value, 
+              repeatCount: document.getElementById('repeat-count').value || (document.getElementById('first-time').value === 'yes' ? '1' : ''),
+              age: document.getElementById('age').value, 
+              gender: document.getElementById('gender').value,
+              occupation: document.getElementById('occupation').value, 
+              mbti: document.getElementById('mbti').value,
+              aiExposureFrequency: document.getElementById('ai-exposure-frequency').value,
+              aiExposureSources: getCheckedValues('ai-exposure-sources-checkboxes'), 
+              otherExposureSource: document.getElementById('ai-exposure-sources-other').value,
+              aiConfidence: document.getElementById('ai-confidence').value, 
+              aiAttitude: document.getElementById('ai-attitude').value,
+              aiConcerns: getCheckedValues('ai-concerns-checkboxes'), 
+              otherConcern: document.getElementById('ai-concerns-other').value,
+              aiBenefits: getCheckedValues('ai-benefits-checkboxes'), 
+              otherBenefit: document.getElementById('ai-benefits-other').value,
+              usedAiTools: getCheckedValues('used-tools-checkboxes'), 
+              otherAiTool: document.getElementById('used-tools-other').value,
+              strategy: getCheckedValues('strategy-checkboxes'), 
+              otherStrategy: document.getElementById('strategy-other').value,
+              suggestions: document.getElementById('suggestions').value, 
+              consent: document.getElementById('consent').checked,
+              timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          };
+
+          const realTotal = responses.filter(r => r.imageType === 'real').length;
+          const realCorrect = responses.filter(r => r.imageType === 'real' && r.isCorrect).length;
+          const aiTotal = responses.filter(r => r.imageType.startsWith('ai')).length;
+          const aiCorrect = responses.filter(r => r.imageType.startsWith('ai') && r.isCorrect).length;
+          const analysisData = {
+              score: correctAnswers, 
+              totalTrials, 
+              responses,
+              overallAccuracy: totalTrials > 0 ? Math.round((correctAnswers / totalTrials) * 100) : 0,
+              avgRT: totalTrials > 0 ? Math.round(responses.reduce((sum, r) => sum + r.rt, 0) / totalTrials) : 0,
+              realAccuracy: realTotal > 0 ? Math.round((realCorrect / realTotal) * 100) : 0,
+              aiAccuracy: aiTotal > 0 ? Math.round((aiCorrect / aiTotal) * 100) : 0,
+          };
+          const resultTitleData = getNuancedResultTitle(analysisData);
+          surveyData.resultTitle_ko = resultTitleData.ko;
+          surveyData.resultTitle_en = resultTitleData.en;
+          showResults(analysisData);
+          db.collection("surveys").add({...surveyData, ...analysisData}).catch((error) => {
+              console.error("Error writing survey to Firestore: ", error);
+              handleError(error);
+          });
+        };
+      }
+    }
+
+    function updateUIText() {
+        const t = i18n[currentLang];
+        DOMElements['question-text'].innerText = t.fixation_instruction;
+        DOMElements['stats-text'].innerHTML = `${t.stats_trial} <span id="trialCount">${currentTrial}</span> / ${totalTrials}`;
+        DOMElements.trialCount = document.getElementById('trialCount');
+        document.getElementById('realBtn').innerText = t.real_btn;
+        document.getElementById('aiBtn').innerText = t.ai_btn;
+        document.getElementById('survey-title').innerText = t.survey_title;
+        document.getElementById('survey-notice-text').innerText = t.survey_notice;
+        document.getElementById('survey-desc').innerText = t.survey_desc;
+        document.getElementById('label-nationality').innerText = t.label_nationality;
+        document.getElementById('nationality').placeholder = t.placeholder_nationality;
+        
+        
+        document.getElementById('label-first-time').innerText = t.label_first_time;
+        document.getElementById('label-repeat-count').innerText = t.label_repeat_count;
+        document.getElementById('repeat-count').placeholder = t.placeholder_repeat_count;
+        document.getElementById('label-age').innerText = t.label_age;
+        document.getElementById('age').placeholder = t.placeholder_age;
+        document.getElementById('label-gender').innerText = t.label_gender;
+        document.getElementById('label-occupation').innerText = t.label_occupation;
+        document.getElementById('occupation').placeholder = t.placeholder_occupation;
+        document.getElementById('occupation-prefer-not-to-say').value = t.occupation_not_to_say;
+        document.getElementById('label-mbti').innerText = t.label_mbti;
+        document.getElementById('label-ai-exposure-frequency').innerText = t.label_ai_exposure_frequency;
+        document.getElementById('label-ai-exposure-sources').innerText = t.label_ai_exposure_sources;
+        document.getElementById('label-ai-confidence').innerText = t.label_ai_confidence;
+        document.getElementById('label-ai-attitude').innerText = t.label_ai_attitude;
+        document.getElementById('label-ai-concerns').innerText = t.label_ai_concerns;
+        document.getElementById('label-ai-benefits').innerText = t.label_ai_benefits;
+        document.getElementById('label-used-tools').innerText = t.label_used_tools;
+        document.getElementById('label-strategy').innerText = t.label_strategy;
+        document.getElementById('label-suggestions').innerText = t.label_suggestions;
+        document.getElementById('suggestions').placeholder = t.placeholder_suggestions;
+        document.getElementById('label-consent').innerText = t.label_consent;
+        document.getElementById('submitBtn').innerText = t.submit_btn;
+        document.getElementById('prevBtn').innerText = currentLang === 'ko' ? '이전' : 'Prev';
+        document.getElementById('nextBtn').innerText = currentLang === 'ko' ? '다음' : 'Next';
+        const populateSelect = (id, options) => {
+            const select = document.getElementById(id);
+            if (select) { select.innerHTML = ''; for (const [value, text] of Object.entries(options)) { select.options.add(new Option(text, value)); } }
+        };
+        populateSelect('first-time', t.first_time_options);
+        populateSelect('gender', t.gender_options);
+        populateSelect('mbti', t.mbti_options);
+        populateSelect('ai-exposure-frequency', t.ai_exposure_frequency_options);
+        populateSelect('ai-confidence', t.ai_confidence_options);
+        populateSelect('ai-attitude', t.ai_attitude_options);
+        createCheckboxes('ai-exposure-sources-checkboxes', t.ai_exposure_sources_options);
+        createCheckboxes('ai-concerns-checkboxes', t.ai_concerns_options);
+        createCheckboxes('ai-benefits-checkboxes', t.ai_benefits_options);
+        createCheckboxes('used-tools-checkboxes', t.used_tools_options);
+        createCheckboxes('strategy-checkboxes', t.strategy_options);
+        addDeselectAllFeature('strategy-checkboxes');
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        setupDOMElements();
+        setupEventListeners();
+        images = imageData;
+        const allImageUrls = [...images.real, ...images.chatgpt, ...images.gemini].map(img => img.url);
+        allImageUrls.forEach(url => { (new Image()).src = url; });
+        DOMElements['start-test-btn'].onclick = () => { showScreen('device-selection-screen'); };
+        
+        if(document.getElementById('app-version-display')) {
+            document.getElementById('app-version-display').textContent = `Ver. ${APP_VERSION}`;
+        }
+    });
+  </script>
+</body>
+</html>

@@ -44,7 +44,7 @@ Post-task survey data. Each row is one participant session.
 | `avgRT` | Mean response time in milliseconds |
 | `repeatCount` | Number of times the participant has completed the task |
 | `firstTime` | Whether this was the participant's first attempt (`yes` / `no`) |
-| `deviceType` | Inferred from `participantId` suffix |
+| ~~`deviceType`~~ | *Not present in this CSV.* Device type is inferred from the `participantId` suffix (`_mobile` or `_web`) during preprocessing. |
 | `aiAttitude` | Self-reported attitude toward AI (e.g., `positive`, `neutral`, `negative`) |
 | `aiConfidence` | Self-reported confidence in ability to detect AI images |
 | `aiExposureFrequency` | How often the participant encounters AI-generated content |

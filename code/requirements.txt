@@ -1,0 +1,28 @@
+# HSMU AI Detection – Reproducibility Environment
+# Python >= 3.10 recommended
+
+# --- Core data processing ---
+pandas>=2.0
+numpy>=1.24
+
+# --- Statistical analysis ---
+scipy>=1.11
+statsmodels>=0.14
+pingouin>=0.5.3
+scikit-posthocs>=0.9
+
+# --- Visualization ---
+matplotlib>=3.7
+seaborn>=0.13
+
+# --- Network / path diagrams ---
+networkx>=3.1
+graphviz>=0.20          # Python bindings (also requires system Graphviz: https://graphviz.org/download/)
+
+# --- Firebase data acquisition (optional – only needed to re-download raw data) ---
+# firebase-admin>=6.2
+
+# --- Jupyter / interactive display ---
+jupyter>=1.0
+ipykernel>=6.25
+ipython>=8.0
