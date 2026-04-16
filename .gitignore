@@ -219,5 +219,8 @@ code/run_logs/
 # Claude CLI / local tooling state
 code/.claude/
 
+# Paper PDF (not distributed via this repo)
+code/paper.pdf
+
 # Original ingredients archive (contains PII CSVs, redundant notebooks, local-only files)
 code/0_ingredients/
