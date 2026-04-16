@@ -397,6 +397,7 @@ def _run_cell_017():
     import matplotlib.pyplot as plt
     from pathlib import Path
     from datetime import datetime
+    from scipy.stats import spearmanr
 
     RUN_TAG = config.RUN_TAG
     OUT_DIR = config.PLOTS_DIR / f"run_{config.RUN_TAG}" / "05_verification_cost_story"
@@ -464,7 +465,7 @@ def _run_cell_017():
         # response (AI vs REAL)
         resp_col = find_first(df.columns, ["response", "answer", "choice", "guess", "userAnswer", "user_answer"])
         # truth (AI vs REAL)
-        truth_col = find_first(df.columns, ["truth", "groundTruth", "ground_truth", "label", "isAI", "is_ai", "is_fake", "is_real"])
+        truth_col = find_first(df.columns, ["truth", "groundTruth", "ground_truth", "label", "isAI", "is_ai", "is_fake", "is_real", "imageType"])
 
         if resp_col is None or truth_col is None:
             print("Available columns:", list(df.columns))
@@ -490,7 +491,7 @@ def _run_cell_017():
                 df["truth_is_ai"] = pd.to_numeric(t, errors="coerce").astype(bool)
         else:
             tt = t.astype(str).str.lower().str.strip()
-            truth_ai = tt.isin(["ai","fake","generated","1","true"])
+            truth_ai = tt.isin(["ai","fake","generated","1","true"]) | tt.str.startswith("ai_")
             truth_real = tt.isin(["real","human","0","false"])
             # if column is is_real in string
             if truth_col.lower() == "is_real":
@@ -735,7 +736,7 @@ def _run_cell_017():
             "PC version is saved as Supplementary (S5).",
         ]
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print("✅ Saved Figure 5 story to:", OUT_DIR)
     print(" -", fig5_png)
     print(" -", figS_png)

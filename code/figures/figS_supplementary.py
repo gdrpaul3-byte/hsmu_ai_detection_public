@@ -532,7 +532,7 @@ def _run_cell_049():
             "Panel D rendered by Graphviz (PNG+SVG). Panel D embedded in FigS1 via PNG raster."
         ]
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     print("✅ saved:", png)
     print("✅ D standalone:", pngD, svgD)
@@ -958,7 +958,7 @@ def _run_cell_053():
             "S2_png": str(OUT_PNG), "S2_svg": str(OUT_SVG),
         }
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
 
     print("✅ saved:", OUT_PNG)
     print("✅ meta:", OUT_DIR / "meta.json")
@@ -1311,7 +1311,7 @@ def _run_cell_061():
     BASE_DIR = config.PROJECT_ROOT
 
     PC_MAIN = config.WEB_AGE_FILTERED
-    PC_TRIAL = Path(r"outputs_26_verification_cost_v1_2\web\26v12-0_trial_level_table.csv")
+    PC_TRIAL = config.OUTPUTS_DIR / "outputs_26_verification_cost_v1_2" / "web" / "26v12-0_trial_level_table.csv"
 
     OUT_DIR = config.PLOTS_DIR / f"run_{config.RUN_TAG}" / "supp" / "figS4_pc_rt"
     OUT_DIR.mkdir(parents=True, exist_ok=True)

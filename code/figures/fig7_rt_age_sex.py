@@ -34,7 +34,7 @@ def _run_cell_037():
     PC_MAIN     = config.WEB_AGE_FILTERED
 
     # From your 26 v1.2 outputs
-    RT26_DIR = BASE_DIR / "outputs_26_verification_cost_v1_2"
+    RT26_DIR = config.OUTPUTS_DIR / "outputs_26_verification_cost_v1_2"
     MOBILE_TRIAL = RT26_DIR / "mobile" / "26v12-0_trial_level_table.csv"
     MOBILE_COEF  = RT26_DIR / "mobile" / "26v12-1_mixedlm_coeffs.csv"
     PC_TRIAL     = RT26_DIR / "web" / "26v12-0_trial_level_table.csv"

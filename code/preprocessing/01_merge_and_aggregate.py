@@ -237,7 +237,7 @@ def _run_cell_000():
                 "participant_stats_long.csv = Prism에서 metric별로 그래프 재구성하기 쉬운 형태",
             ],
         }
-        (section_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        (section_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         print("📁 저장 완료:")
         print(f" - (메인) {out_filtered.name}")

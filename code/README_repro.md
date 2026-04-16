@@ -95,9 +95,15 @@ To re-download raw data from Firebase (not required for reproduction), install
 `firebase-admin` separately: `pip install firebase-admin`.
 
 **Graphviz system dependency**: The `graphviz` Python package requires the Graphviz
-system binary. Install it from https://graphviz.org/download/ and ensure the `dot`
-command is on your PATH. This is only needed for path-diagram visualizations
-(mediation figures).
+system binary (the `dot` executable must be on your PATH). The `pip install graphviz`
+alone is not sufficient.
+
+- macOS: `brew install graphviz`
+- Debian/Ubuntu: `sudo apt-get install graphviz`
+- Windows: `winget install Graphviz.Graphviz` (or download from https://graphviz.org/download/)
+
+This is only needed for path-diagram visualizations (mediation figures in Fig. 3,
+Fig. 4, and the supplementary figure).
 
 ### Input data
 

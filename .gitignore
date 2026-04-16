@@ -211,5 +211,13 @@ code/data/intermediate/
 code/outputs/
 code/plots/
 
+# Legacy/hardcoded-path output folders written by analysis scripts outside code/outputs/
+code/outputs_*/
+code/analysis_data_*.csv
+code/run_logs/
+
+# Claude CLI / local tooling state
+code/.claude/
+
 # Original ingredients archive (contains PII CSVs, redundant notebooks, local-only files)
 code/0_ingredients/

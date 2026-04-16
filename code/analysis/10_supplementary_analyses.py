@@ -2265,7 +2265,7 @@ def _run_cell_141():
 
         # meta 저장
         meta_path = section_dir / "meta.json"
-        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
         print(f"✅ meta saved: {meta_path}")
 
         print("\n==================== (32) DONE ====================")
@@ -3734,12 +3734,12 @@ def _run_cell_153():
         "created_at": datetime.now().isoformat(),
         "n_boot": N_BOOT,
         "seed": SEED,
-        "input_files": COHORT_FILES,
+        "input_files": {k: str(v) for k, v in COHORT_FILES.items()},
         "outputs_dir": str(SECTION_DIR),
         "note": "TRUE parallel mediation: Y model includes all mediators simultaneously; bootstrap CI for paths and indirect effects."
     }
     meta_path = SECTION_DIR / "meta.json"
-    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"✅ meta saved: {meta_path}")
 
     print("\n==================== (35) DONE ====================")
@@ -4138,7 +4138,7 @@ def _run_cell_154():
         "note": "Same as 35.1 but prints key effect tables to console."
     }
     meta_path = SECTION_DIR / "meta.json"
-    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"✅ meta saved: {meta_path}")
 
     print("\n==================== (35.1) DONE ====================")
@@ -4471,7 +4471,7 @@ def _run_cell_157():
         "note": "Z-test compares female vs male path coefficients (a and b paths) using OLS SEs. Run per cohort."
     }
     meta_path = SECTION_DIR / "meta.json"
-    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"✅ meta saved: {meta_path}")
 
     print("\n==================== (35.2) DONE ====================")
@@ -4681,7 +4681,7 @@ def _run_cell_160():
         "out_dir": str(OUT_DIR),
         "results": results,
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"✅ meta saved: {OUT_DIR / 'meta.json'}")
 
 
@@ -5058,7 +5058,7 @@ def _run_cell_163():
         print(f"==================== [{cohort_tag.upper()}] (35.1β) END ====================\n")
 
     meta_out = SECTION_DIR / "meta.json"
-    meta_out.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta_out.write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"✅ meta saved: {meta_out}")
     print("\n==================== (35.1β) DONE ====================")
 
@@ -5317,7 +5317,7 @@ def _run_cell_164():
             meta[cohort_tag] = {"error": str(e)}
 
     meta_path = OUT_DIR / "meta.json"
-    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False), encoding="utf-8")
+    meta_path.write_text(json.dumps(meta, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
     print(f"\n✅ meta saved: {meta_path}")
     print("\n==================== (36β) DONE ====================")
 

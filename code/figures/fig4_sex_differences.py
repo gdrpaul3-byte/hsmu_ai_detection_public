@@ -266,7 +266,7 @@ def _run_cell_010():
             "Interaction p-value is left as placeholder; paste your ANOVA interaction p there."
         ]
     }
-    (SECTION_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (SECTION_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print("✅ saved meta:", SECTION_DIR / "meta.json")
     print("✅ outputs dir:", SECTION_DIR)
 
@@ -760,7 +760,7 @@ def _run_cell_012():
             "4D compares Δa2 vs Δb2 to explain the ind2 sex difference."
         ]
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print("✅ Figure 4 outputs saved to:", OUT_DIR)
     print("✅ meta:", OUT_DIR / "meta.json")
 

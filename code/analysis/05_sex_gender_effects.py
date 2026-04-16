@@ -193,7 +193,7 @@ def _run_cell_012():
             }
         }
         meta_out = section_dir / f"{base}__meta.json"
-        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         return meta["summary"]
 

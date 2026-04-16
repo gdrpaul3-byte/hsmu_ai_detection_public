@@ -345,7 +345,7 @@ def _run_cell_022():
             "Panel C: age-bin × sex strategy usage for effective strategies; none survive FDR (mobile).",
         ]
     }
-    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (OUT_DIR / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print("✅ Saved Figure 5 to:", OUT_DIR)
     print(" -", png_out)
 
@@ -702,7 +702,7 @@ def _run_cell_035():
             "Mobile main + PC supplementary outputs saved with correct labels/filenames."
         ],
     }
-    (RUN_OUT / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    (RUN_OUT / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print("✅ Saved Figure 6 outputs to:", RUN_OUT)
 
 

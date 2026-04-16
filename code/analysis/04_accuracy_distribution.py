@@ -103,7 +103,7 @@ def save_accuracy_distribution(file_path, section_dir: Path, section_number="2-1
             "png": str(png_out),
             "svg": str(svg_out),
         },
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
 
 def save_age_accuracy_regplot(df: pd.DataFrame, cohort_tag: str, section_dir: Path, acc_col: str, section_number="4-2"):
@@ -171,7 +171,7 @@ def save_age_accuracy_regplot(df: pd.DataFrame, cohort_tag: str, section_dir: Pa
             "png": str(png_out),
             "svg": str(svg_out),
         },
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     return r, p, lr, int(len(d))
 
 
@@ -219,7 +219,7 @@ def main():
         "section": "04_age_accuracy",
         "run_dir": str(run_dir),
         "cohorts": [str(config.MOBILE_AGE_FILTERED), str(config.WEB_AGE_FILTERED)],
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    }, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
 
 if __name__ == "__main__":

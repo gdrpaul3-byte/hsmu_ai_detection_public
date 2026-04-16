@@ -770,7 +770,7 @@ def _run_cell_003():
         }
     }
     meta_out = section_dir / "01_meta.json"
-    meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print(f"✅ meta saved: {meta_out}")
 
     print("\n==================== DONE ====================")
@@ -964,7 +964,7 @@ def _run_cell_004():
                 "svg": str(svg_out),
             }
         }
-        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         print(f"✅ saved: {png_out}")
         print(f"✅ saved: {svg_out}")
@@ -1196,7 +1196,7 @@ def _run_cell_005():
         "formula": "Z = (b_pc - b_mobile)/sqrt(se_pc^2 + se_mobile^2)",
     }
     meta_out = SECTION_DIR / f"{base}__meta.json"
-    meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
     print("✅ saved:")
     print(" -", png_out)

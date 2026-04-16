@@ -257,7 +257,7 @@ def _run_cell_005():
             "plotting_available": plotting_available,
         }
         meta_out = section_dir / f"{base_filename}__meta.json"
-        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        meta_out.write_text(json.dumps(meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         # 콘솔용 요약 반환
         return {
@@ -399,7 +399,7 @@ def _run_cell_005():
             "device_counts_csv": str(device_counts_out),
             "summary_csv": str(summary_out),
         }
-        (section_dir / "section_meta.json").write_text(json.dumps(section_meta, ensure_ascii=False, indent=2), encoding="utf-8")
+        (section_dir / "section_meta.json").write_text(json.dumps(section_meta, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
 
         print(f"\n📁 섹션3 저장 위치: {section_dir}")
         print(f" - device counts: {device_counts_out}")

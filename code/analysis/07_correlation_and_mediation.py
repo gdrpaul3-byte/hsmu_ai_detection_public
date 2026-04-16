@@ -779,8 +779,8 @@ def _run_cell_046():
         run_dir = r"outputs\run_20260119_192624"
 
         cohort_files = {
-            "mobile": rconfig.MOBILE_AGE_FILTERED,
-            "web": rconfig.WEB_AGE_FILTERED,
+            "mobile": config.MOBILE_AGE_FILTERED,
+            "web": config.WEB_AGE_FILTERED,
         }
 
         for cohort_tag, main_path in cohort_files.items():
